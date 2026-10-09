@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Aegis — Web Prototype (Lightweight STT Demo)</title>
+<style>
+  :root {
+    --bg: #000; --fg: #fff; --accent: #ffd60a; --dim: #888;
+    --card: #111; --btn: #1e1e1e; --font-scale: 1.25;
+  }
+  [data-theme="light"] { --bg: #fff; --fg: #000; --card: #f2f2f2; --btn: #e8e8e8; --dim: #555; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg);
+    font-family: system-ui, sans-serif; height: 100vh; display: flex; flex-direction: column; }
+  header { display: flex; gap: .5rem; align-items: center; padding: .6rem 1rem;
+    border-bottom: 2px solid var(--accent); font-weight: 700; }
+  header .spacer { flex: 1; }
+  button, select, input[type=text] { font-size: 1rem; padding: .6rem .9rem;
+    border-radius: .6rem; border: 1px solid var(--dim); background: var(--btn); color: var(--fg); }
+  button.primary { background: var(--accent); color: #000; font-weight: 800; border: none; }
+  button:active { transform: scale(.97); }
+  main { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+  /* TOP = clerk viewport, rotated so person across counter can read */
+  #clerkZone { flex: 1; display: flex; align-items: center; justify-content: center;
+    background: var(--card); border-bottom: 2px dashed var(--accent); overflow: auto; padding: 1rem; }
+  #clerkText { transform: rotate(180deg); text-align: center; font-weight: 800;
+    font-size: calc(2rem * var(--font-scale)); line-height: 1.2; }
+  /* BOTTOM = DHH viewport, live captions */
+  #userZone { flex: 1.2; overflow-y: auto; padding: 1rem; font-size: calc(1.3rem * var(--font-scale)); }
+  #finalLog p { margin: .3rem 0; }
+  #interim { color: var(--dim); font-style: italic; min-height: 1.5em; }
+  #macroGrid { display: flex; flex-wrap: wrap; gap: .5rem; padding: .7rem 1rem; }
+  #macroGrid button { border: 2px solid var(--accent); }
+  #controls { display: flex; flex-wrap: wrap; gap: .5rem; padding: .7rem 1rem; align-items: center; }
+  #status { padding: 0 1rem .6rem; color: var(--dim); font-size: .9rem; }
+  #fallbackRow { display: flex; gap: .5rem; padding: 0 1rem .8rem; }
+  #fallbackRow input { flex: 1; }
+  .pill { font-size: .8rem; border: 1px solid var(--dim); border-radius: 999px; padding: .15rem .6rem; }
+</style>
+</head>
+<body>
+<header>
+  <span>AEGIS · web prototype</span>
+  <span class="pill" id="supportPill">checking support…</span>
+  <span class="spacer"></span>
+  <select id="lang" title="Recognition locale">
+    <option value="en-IN" selected>en-IN (on-device friendly)</option>
+    <option value="en-US">en-US</option>
+    <option value="hi-IN">hi-IN</option>
+  </select>
+  <button id="themeBtn" title="Dark / light high-contrast toggle">◐ Theme</button>
+  <label class="pill">A+ <input type="range" id="fontScale" min="1" max="2" step="0.1" value="1.25" style="width:70px;vertical-align:middle"></label>
+</header>
+
+<main>
+  <section id="clerkZone"><div id="clerkText">Tap Listen — clerk reply shows here, upside-down</div></section>
+  <section id="userZone">
+    <div id="finalLog"></div>
+    <div id="interim"></div>
+  </section>
+</main>
+
+<div id="macroGrid"></div>
+
+<div id="controls">
+  <button id="listenBtn" class="primary">🎤 Start Listening</button>
+  <button id="stopTtsBtn">⏹ Stop speech</button>
+  <span class="pill" id="modePill">context: general</span>
+</div>
+
+<div id="fallbackRow">
+  <input type="text" id="typedFallback" placeholder="Type fallback reply (e.g. Show me the QR) → Speak + show upside-down" />
+  <button id="speakTypedBtn">🔊 Speak</button>
+</div>
+<div id="status">Idle. Chrome + mic + localhost/https required. Chrome STT is network-backed (per architecture doc §5).</div>
+
+<script>
+// ---------- Macro packs (mirrors engine/macroPacks.ts in doc) ----------
+const MACRO_PACKS = [
+  { id: "pay.upi",   context: "payment",  keywords: ["upi","scan","qr","payment","pay","gpay","phonepe"], text: "Please show the UPI QR code scanner.", label: "Scan UPI QR Code" },
+  { id: "pay.total", context: "payment",  keywords: ["total","bill","amount","much","price"], text: "Please show me the total amount.", label: "Show Total" },
+  { id: "del.leave", context: "delivery", keywords: ["delivery","leave","door","parcel","otp"], text: "Please leave the parcel at the door.", label: "Leave at Door" },
+  { id: "del.otp",   context: "delivery", keywords: ["otp","code","delivery","confirm"], text: "Please show me the OTP on your screen.", label: "Show OTP" },
+  { id: "gen.repeat",context: "general",  keywords: ["repeat","again","slow","pardon"], text: "Please speak slowly, I am reading captions.", label: "Speak Slowly" },
+  { id: "gen.token", context: "general",  keywords: ["token","number","turn","call"], text: "Please show me my token number.", label: "Show Token" },
+];
+
+// ---------- Intent engine: tokenize -> keyword hits -> rank (pure local, <1ms) ----------
+function scoreIntent(transcript) {
+  const tokens = transcript.toLowerCase().split(/\W+/);
+  let best = { pack: MACRO_PACKS[4], hits: 0, context: "general" };
+  const ctxScores = {};
+  for (const m of MACRO_PACKS) {
+    const hits = m.keywords.filter(k => tokens.includes(k)).length;
+    ctxScores[m.context] = (ctxScores[m.context] || 0) + hits;
+    if (hits > best.hits) best = { pack: m, hits, context: m.context };
+  }
+  const topCtx = Object.entries(ctxScores).sort((a,b)=>b[1]-a[1])[0];
+  return { best, context: topCtx && topCtx[1] > 0 ? topCtx[0] : "general" };
+}
+
+// ---------- State / storage (localStorage mirrors AsyncStorage/SQLite in doc) ----------
+const $ = id => document.getElementById(id);
+const finalLog = $("finalLog"), interimEl = $("interim"), clerkText = $("clerkText");
+const statusEl = $("status"), modePill = $("modePill");
+let listening = false, debounceTimer = null;
+
+function renderMacros(filterCtx) {
+  const grid = $("macroGrid"); grid.innerHTML = "";
+  const ranked = [...MACRO_PACKS].sort((a,b) =>
+    (b.context === filterCtx) - (a.context === filterCtx));
+  for (const m of ranked.slice(0, 6)) {
+    const b = document.createElement("button");
+    b.textContent = m.label;
+    b.onclick = () => speakMacro(m);
+    grid.appendChild(b);
+  }
+}
+function speakMacro(m) {
+  const text = m.text;
+  clerkText.textContent = text;                       // top viewport, upside-down via CSS
+  speak(text);                                        // TTS engine
+  if (navigator.vibrate) navigator.vibrate([80, 40, 80]); // haptic alert
+  statusEl.textContent = "Spoke macro: " + m.id;
+}
+function speak(text) {
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.rate = 0.95; u.volume = 1;
+  speechSynthesis.speak(u);
+}
+
+// ---------- Speech recognizer (Web Speech API — lightweight, zero-install) ----------
+// Core of your question: this is the entire recognizer wiring.
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+if (!SR) {
+  $("supportPill").textContent = "STT NOT supported — use Chrome/Edge";
+  statusEl.textContent = "Web Speech API not found. Open this file in Chrome or Edge.";
+} else {
+  $("supportPill").textContent = "STT supported ✓";
+}
+const rec = SR ? new SR() : null;
+if (rec) {
+  rec.continuous = true;        // keep listening across pauses (turn-taking)
+  rec.interimResults = true;    // onPartialResults equivalent: stream interim
+  rec.lang = $("lang").value;
+  $("lang").onchange = e => { rec.lang = e.target.value; };
+
+  rec.onresult = (event) => {
+    let interim = "", finalChunk = "";
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const r = event.results[i];
+      if (r.isFinal) finalChunk += r[0].transcript;
+      else interim += r[0].transcript;
+    }
+    interimEl.textContent = interim;   // dimmed, noisy — don't match on this (doc §5)
+    if (finalChunk.trim()) commitFinal(finalChunk.trim());
+    else {
+      // debounce: only run intent matcher ~600ms after pause (doc §5 mitigation)
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        const t = interimEl.textContent.trim();
+        if (t) { commitFinal(t); interimEl.textContent = ""; }
+      }, 600);
+    }
+  };
+  rec.onerror = (e) => { statusEl.textContent = "Mic/STT " + e.error + " — allow mic, use localhost/https."; };
+  rec.onend = () => { if (listening) { try { rec.start(); } catch {} } }; // auto-restart
+}
+function commitFinal(text) {
+  const p = document.createElement("p");
+  p.textContent = text;
+  finalLog.appendChild(p);
+  p.scrollIntoView({ block: "end" });
+  localStorage.setItem("aegis_last_session", finalLog.innerText.slice(-2000)); // session log
+  const { context } = scoreIntent(text);
+  modePill.textContent = "context: " + context;
+  renderMacros(context);
+}
+
+$("listenBtn").onclick = async () => {
+  if (!rec) return alert("Use Chrome/Edge for speech recognition.");
+  try { await navigator.mediaDevices.getUserMedia({ audio: true }); } // triggers mic permission prompt
+  catch { statusEl.textContent = "Mic permission denied."; return; }
+  if (!listening) {
+    listening = true; rec.start();
+    $("listenBtn").textContent = "⏸ Stop Listening";
+    statusEl.textContent = "Listening… (" + rec.lang + ") speak at counter distance (~1m).";
+  } else {
+    listening = false; rec.stop();
+    $("listenBtn").textContent = "🎤 Start Listening";
+    statusEl.textContent = "Stopped.";
+  }
+};
+$("stopTtsBtn").onclick = () => speechSynthesis.cancel();
+$("speakTypedBtn").onclick = () => {
+  const t = $("typedFallback").value.trim(); if (!t) return;
+  clerkText.textContent = t; speak(t);
+  if (navigator.vibrate) navigator.vibrate(60);
+};
+$("themeBtn").onclick = () => {
+  const h = document.documentElement;
+  h.dataset.theme = h.dataset.theme === "dark" ? "light" : "dark";
+};
+$("fontScale").oninput = e =>
+  document.documentElement.style.setProperty("--font-scale", e.target.value);
+
+// init
+renderMacros("general");
+const last = localStorage.getItem("aegis_last_session");
+if (last) statusEl.textContent += " Last session restored (" + last.length + " chars).";
+</script>
+</body>
+</html>
+
+
+// Guys Run with python -m http.server 8000
