@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Aegis — Web Prototype (Lightweight STT Demo)</title>
+<title>Citadel — Web Prototype (Lightweight STT Demo)</title>
 <style>
   :root {
     --bg: #000; --fg: #fff; --accent: #ffd60a; --dim: #888;
@@ -41,7 +41,7 @@
 </head>
 <body>
 <header>
-  <span>AEGIS · web prototype</span>
+  <span>Citadel · web prototype</span>
   <span class="pill" id="supportPill">checking support…</span>
   <span class="spacer"></span>
   <select id="lang" title="Recognition locale">
@@ -173,7 +173,7 @@ function commitFinal(text) {
   p.textContent = text;
   finalLog.appendChild(p);
   p.scrollIntoView({ block: "end" });
-  localStorage.setItem("aegis_last_session", finalLog.innerText.slice(-2000)); // session log
+  localStorage.setItem("citadel_last_session", finalLog.innerText.slice(-2000)); // session log
   const { context } = scoreIntent(text);
   modePill.textContent = "context: " + context;
   renderMacros(context);
@@ -208,7 +208,7 @@ $("fontScale").oninput = e =>
 
 // init
 renderMacros("general");
-const last = localStorage.getItem("aegis_last_session");
+const last = localStorage.getItem("citadel_last_session");
 if (last) statusEl.textContent += " Last session restored (" + last.length + " chars).";
 </script>
 </body>
