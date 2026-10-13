@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>RaktCo — Chat Dispatch</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=JetBrains+Mono:wght@600;800&display=swap" rel="stylesheet">
+<style>
+body{font-family:'Plus Jakarta Sans',system-ui;background:#0E0A0C;color:#1c0a0e}
+.mono{font-family:'JetBrains Mono',monospace}
+.chat-bg-patient{background:#FFF3F4;background-image:radial-gradient(rgba(225,29,72,.10) 1px,transparent 1px);background-size:20px 20px}
+.chat-bg-donor{background:#0B141A;background-image:radial-gradient(rgba(255,255,255,.06) 1px,transparent 1px);background-size:18px 18px}
+.bubble-bot{background:#fff;border:2px solid #160609;box-shadow:4px 4px 0 #160609;border-radius:4px 18px 18px 18px}
+.bubble-me{background:#160609;color:#fff;border-radius:18px 4px 18px 18px;box-shadow:4px 4px 0 rgba(225,29,72,.4)}
+.bubble-donor{background:#fff;color:#111;border-radius:4px 16px 16px 16px}
+.chip{transition:all .15s;border:2px solid #160609;box-shadow:3px 3px 0 #160609}
+.chip:active{transform:translate(2px,2px);box-shadow:0 0 0 #160609}
+.chip:hover{background:#BEF264}
+.typing span{width:7px;height:7px;border-radius:99px;background:#160609;display:inline-block;animation:bl 1s infinite}
+.typing span:nth-child(2){animation-delay:.15s}.typing span:nth-child(3){animation-delay:.3s}
+@keyframes bl{0%,100%{opacity:.25;transform:translateY(0)}50%{opacity:1;transform:translateY(-3px)}}
+.msg-in{animation:pop .35s cubic-bezier(.2,1.2,.3,1) both}
+@keyframes pop{from{transform:translateY(10px) scale(.97);opacity:0}to{transform:none;opacity:1}}
+.tick{font-variant-numeric:tabular-nums}
+.pulse-dot{animation:pd 1.4s infinite}
+@keyframes pd{0%{box-shadow:0 0 0 0 rgba(225,29,72,.6)}70%{box-shadow:0 0 0 10px rgba(225,29,72,0)}100%{box-shadow:0 0 0 0 rgba(225,29,72,0)}}
+#radar{width:100%;height:100%;display:block}
+.thin-sb::-webkit-scrollbar{width:5px}.thin-sb::-webkit-scrollbar-thumb{background:rgba(0,0,0,.3);border-radius:99px}
+.burst{animation:burst .6s ease both}
+@keyframes burst{0%{transform:scale(.5)}60%{transform:scale(1.15)}100%{transform:scale(1)}}
+.sos-fab{position:fixed;right:16px;bottom:18px;z-index:50;width:68px;height:68px;border-radius:22px;background:#E11D48;color:#fff;font-weight:900;border:3px solid #160609;box-shadow:6px 6px 0 #160609;animation:pd 1.6s infinite}
+.sos-fab:active{transform:translate(3px,3px);box-shadow:2px 2px 0 #160609}
+.emg-flash{animation:emg 1s infinite}
+@keyframes emg{0%,100%{background:#E11D48}50%{background:#9F1239}}
+.sev{border:2px solid #160609;padding:8px 0;border-radius:14px;font-weight:800;font-size:12px;flex:1}
+.sev.on{box-shadow:3px 3px 0 #160609;transform:translate(-1px,-1px)}
+.modal-bg{background:rgba(22,6,9,.65);backdrop-filter:blur(3px)}
+.eta-chip{background:#BEF264;border:2px solid #160609;font-family:'JetBrains Mono';font-weight:800;font-size:11px;padding:2px 8px;border-radius:99px}
+.actionbar{display:flex;gap:6px;flex-wrap:wrap}
+.actionbar a,.actionbar button{flex:1;min-width:70px;text-align:center;font-family:'JetBrains Mono';font-size:11px;font-weight:800;border:2px solid #160609;border-radius:12px;padding:9px 4px;background:#fff;box-shadow:3px 3px 0 #160609}
+.toolgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.toolcard{border:2px solid #160609;border-radius:14px;padding:10px;background:#fff;box-shadow:3px 3px 0 #160609}
+</style>
+</head>
+<body class="min-h-screen">
+
+<div class="bg-[#160609] text-white sticky top-0 z-40">
+<div class="max-w-7xl mx-auto px-4 py-2.5 flex items-center gap-2.5">
+<div class="w-9 h-9 grid place-items-center text-lg bg-[#E11D48] border-2 border-white rounded-xl">🩸</div>
+<div><div class="font-extrabold leading-none">RAKT//CHAT <span class="mono text-[10px] bg-[#BEF264] text-black px-1.5 py-0.5 rounded ml-1">BOT v3</span></div><div class="mono text-[10px] text-white/60">no forms • just talk • ⏱ <span id="clock" class="tick">00:00</span> <span id="liveBadge" class="hidden text-[#BEF264]">● LIVE</span></div></div>
+<div class="flex-1"></div>
+<div class="flex bg-white/10 rounded-full p-1 gap-1">
+<button id="tabR" onclick="setView('r')" class="text-[12px] font-extrabold px-3.5 py-1.5 rounded-full bg-white text-black">YOU</button>
+<button id="tabD" onclick="setView('d')" class="text-[12px] font-extrabold px-3.5 py-1.5 rounded-full text-white/60">DONOR</button>
+<button id="tabS" onclick="setView('s')" class="text-[12px] font-extrabold px-3.5 py-1.5 rounded-full text-white/60 hidden sm:block">BOTH ★</button>
+</div>
+</div>
+</div>
+
+<main class="max-w-7xl mx-auto px-3 sm:px-4 py-4">
+<div id="views" class="grid gap-4 items-start lg:grid-cols-[1.05fr_.95fr]">
+
+<!-- LEFT: YOU + BOT -->
+<section id="paneMe" class="bg-white border-[2.5px] border-[#160609] rounded-3xl overflow-hidden flex flex-col" style="box-shadow:8px 8px 0 #160609;height:min(82vh,760px)">
+<div class="px-4 py-3 border-b-[2.5px] border-[#160609] bg-[#FFF0F2] flex items-center gap-3">
+<div class="w-10 h-10 rounded-2xl grid place-items-center text-xl text-white bg-[#E11D48] border-2 border-[#160609] pulse-dot">🤖</div>
+<div class="flex-1"><div class="font-extrabold text-[15px]">Rakt Bot <span class="mono text-[10px] text-green-700">● online</span></div><div class="mono text-[10px] font-bold opacity-60" id="botStatus">triage specialist • replies instantly</div></div>
+<button onclick="openSOS()" class="mono text-[11px] font-extrabold px-2.5 py-1.5 text-white chip" style="background:#E11D48">SOS</button>
+<button onclick="restart()" class="mono text-[11px] font-extrabold border-2 border-[#160609] px-2.5 py-1.5 bg-white chip">↺</button>
+</div>
+<div id="sosBar" class="hidden px-4 py-2.5 border-b-[2.5px] border-[#160609] emg-flash text-white">
+<div class="flex items-center gap-2"><span class="mono text-[11px] font-extrabold" id="sosBarTxt">🚨 SOS LIVE</span><span class="eta-chip !text-black" id="sosEta">00:00</span><div class="flex-1"></div><button onclick="cancelSOS()" class="mono text-[10px] font-extrabold bg-black px-2 py-1 rounded">END</button></div>
+<div class="actionbar mt-2">
+<a id="actShare" href="#" onclick="return shareSOS()">↗ SHARE</a>
+<a href="tel:108">🚑 108</a>
+<a id="actDir" href="#" target="_blank">🧭 ROUTE</a>
+<button onclick="fulfilledSOS()">✔ GOT BLOOD</button>
+</div>
+</div>
+<div id="chatMe" class="chat-bg-patient flex-1 overflow-y-auto thin-sb p-3 sm:p-4 space-y-3"></div>
+<div id="quickMe" class="px-3 pb-2 flex flex-wrap gap-2"></div>
+<div class="p-3 border-t-[2.5px] border-[#160609] bg-white flex gap-2">
+<input id="inMe" placeholder="Type blood group, e.g. A+ …" class="flex-1 border-2 border-[#160609] rounded-2xl px-4 py-2.5 font-bold text-[14px] outline-none" onkeydown="if(event.key==='Enter')sendFree()"/>
+<button onclick="sendFree()" class="w-11 h-11 grid place-items-center text-white bg-[#160609] rounded-2xl text-lg">➤</button>
+</div>
+</section>
+
+<!-- RIGHT: RADAR + DONOR CHAT -->
+<section id="paneDonor" class="flex flex-col gap-4">
+<div class="bg-[#160609] text-white border-[2.5px] border-[#160609] rounded-3xl overflow-hidden" style="box-shadow:8px 8px 0 rgba(225,29,72,.45)">
+<div class="flex items-center justify-between px-4 pt-3"><span class="mono text-[11px] font-extrabold text-white/80">● DONOR RADAR — YOU ARE CENTER</span><span class="mono text-[11px] font-extrabold text-[#BEF264]" id="radarCount">…</span></div>
+<div class="m-3 rounded-2xl overflow-hidden border-2 border-white/15 relative" style="height:270px;background:#FFFDF7"><canvas id="radar"></canvas>
+<div class="absolute bottom-2 left-2 mono text-[10px] font-extrabold bg-black text-[#BEF264] px-2 py-1" id="radarLabel">SCANNING…</div></div>
+<div class="mono text-[10px] font-bold px-4 pb-3 text-white/60">🟢 eligible &nbsp;⚪ muted &lt;90d &nbsp;🔴 bank &nbsp;• sweep lights them up</div>
+</div>
+
+<div class="bg-[#0B141A] border-[2.5px] border-[#160609] rounded-3xl overflow-hidden flex flex-col" style="box-shadow:8px 8px 0 #160609;height:min(52vh,480px)">
+<div class="px-4 py-2.5 flex items-center gap-3" style="background:#075E54">
+<div class="w-9 h-9 rounded-full bg-white/20 grid place-items-center">📻</div>
+<div class="flex-1"><div class="font-extrabold text-white text-[14px]">Donor WhatsApp</div><div class="mono text-[10px] text-white/70" id="donorStatus">standby • <select id="meDonor" onchange="donorSwitch()" class="text-black font-bold rounded px-1"></select> <label class="text-white/80 ml-1"><input type="checkbox" id="meAvail" checked onchange="renderDonorHint()" class="accent-green-500"/> on-duty</label></div></div>
+</div>
+<div id="chatDonor" class="chat-bg-donor flex-1 overflow-y-auto thin-sb p-3 space-y-2.5"></div>
+<div id="quickDonor" class="p-2.5 flex flex-wrap gap-2"></div>
+</div>
+<div class="bg-white border-[2.5px] border-[#160609] rounded-3xl p-3" style="box-shadow:6px 6px 0 #160609">
+<div class="mono text-[10px] font-extrabold opacity-60 mb-2">◉ DONOR TOOLS</div>
+<div class="toolgrid">
+<div class="toolcard"><div class="mono text-[10px] font-extrabold opacity-60">NEXT ELIGIBLE</div><div id="toolElig" class="font-extrabold text-[13px]">—</div></div>
+<div class="toolcard"><div class="mono text-[10px] font-extrabold opacity-60">BADGE</div><div id="toolBadge" class="font-extrabold text-[13px]">🌱 New</div></div>
+</div>
+<div class="flex gap-2 mt-2">
+<button onclick="openCompat()" class="chip mono text-[11px] font-extrabold flex-1 py-2 rounded-xl bg-white">🩸 CHART</button>
+<button onclick="copyReferral()" class="chip mono text-[11px] font-extrabold flex-1 py-2 rounded-xl bg-[#BEF264]">🎁 REFER +₹50</button>
+</div>
+</div>
+</section>
+
+</div>
+<p class="mono text-center text-[10px] font-bold mt-5 text-white/40">CHAT-FIRST PROTOTYPE • TYPE OR TAP • MOCK DATA • <span id="locLabel">DELHI</span> • <button onclick="showHistory()" class="underline">HISTORY</button></p>
+</main>
+
+<button id="sosFab" onclick="openSOS()" class="sos-fab">SOS</button>
+
+<div id="sosModal" class="hidden fixed inset-0 z-50 modal-bg grid place-items-center p-4">
+<div class="bg-white border-[3px] border-[#160609] rounded-3xl p-5 max-w-sm w-full" style="box-shadow:8px 8px 0 #160609">
+<div class="mono text-[11px] font-extrabold bg-[#E11D48] text-white inline-block px-2.5 py-1 rounded-lg">🚨 EMERGENCY SOS — 1 TAP</div>
+<div class="mono text-[10px] font-extrabold opacity-60 mt-3 mb-1">SEVERITY</div>
+<div class="flex gap-2" id="sevRow">
+<button data-s="Critical <1hr" onclick="pickSev(this)" class="sev on" style="background:#FEE2E2">🔴 CRITICAL<br><span class="mono text-[10px]">&lt;1 hr</span></button>
+<button data-s="Urgent <4hr" onclick="pickSev(this)" class="sev" style="background:#FEF3C7">🟡 URGENT<br><span class="mono text-[10px]">&lt;4 hr</span></button>
+<button data-s="Scheduled" onclick="pickSev(this)" class="sev" style="background:#DCFCE7">🟢 PLANNED<br><span class="mono text-[10px]">today</span></button>
+</div>
+<div class="mono text-[10px] font-extrabold opacity-60 mt-3 mb-1">BLOOD GROUP</div>
+<div id="sosGroups" class="grid grid-cols-4 gap-1.5"></div>
+<div class="mono text-[10px] font-extrabold opacity-60 mt-3 mb-1">UNITS: <span id="sosUnitsV" class="tick text-[16px]">2</span></div>
+<div class="flex items-center gap-2"><button onclick="sosBump(-1)" class="chip w-10 h-10 rounded-xl bg-white font-black">−</button><button onclick="sosBump(1)" class="chip w-10 h-10 rounded-xl bg-[#E11D48] text-white font-black">+</button><span class="mono text-[10px] opacity-60">auto-expands radius if no reply</span></div>
+<div class="flex gap-2 mt-4">
+<button onclick="closeSOS()" class="chip flex-1 py-3 font-extrabold rounded-2xl bg-white">CANCEL</button>
+<button onclick="fireSOS()" class="chip flex-1 py-3 font-extrabold rounded-2xl text-white" style="background:#E11D48">⚡ BROADCAST</button>
+</div>
+</div>
+</div>
+
+<div id="compatModal" class="hidden fixed inset-0 z-50 modal-bg grid place-items-center p-4">
+<div class="bg-white border-[3px] border-[#160609] rounded-3xl p-5 max-w-sm w-full" style="box-shadow:8px 8px 0 #160609">
+<div class="font-extrabold text-[16px]">🩸 Who can give to whom?</div>
+<div id="compatTable" class="mono text-[11px] font-bold mt-3 space-y-1"></div>
+<button onclick="closeCompat()" class="chip w-full py-2.5 mt-4 font-extrabold rounded-xl bg-[#160609] text-white">CLOSE</button>
+</div>
+</div>
+
+<div id="toasts" class="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 space-y-2 w-[92%] max-w-sm"></div>
+
+<script>
+const GROUPS=["O-","O+","A-","A+","B-","B+","AB-","AB+"];
+const COMPAT={"O-":["O-"],"O+":["O-","O+"],"A-":["O-","A-"],"A+":["O-","O+","A-","A+"],"B-":["O-","B-"],"B+":["O-","O+","B-","B+"],"AB-":["O-","A-","B-","AB-"],"AB+":["O-","O+","A-","A+","B-","B+","AB-","AB+"]};
+const DELHI={lat:28.6139,lng:77.2090};
+let userLoc={...DELHI,label:"DELHI"};
+const BANKS=[{n:"AIIMS",lat:28.5672,lng:77.21,stock:"YES",ph:"911126588500"},{n:"SAFDARJUNG",lat:28.5679,lng:77.2089,stock:"YES",ph:"911126165050"},{n:"RED CROSS",lat:28.6244,lng:77.2043,stock:"LOW",ph:"911123711507"},{n:"LNJP",lat:28.6731,lng:77.2815,stock:"YES",ph:"911123236000"},{n:"MAX SAKET",lat:28.5244,lng:77.2066,stock:"LOW",ph:"911126515050"},{n:"FORTIS OKHLA",lat:28.5333,lng:77.2785,stock:"YES",ph:"911147135000"},{n:"FARIDABAD",lat:28.4089,lng:77.3178,stock:"YES",ph:"911294001221"},{n:"MEERUT 65KM",lat:28.9845,lng:77.7064,stock:"YES",ph:"911212660108"},{n:"ALWAR 150KM+",lat:27.553,lng:76.6346,stock:"LOW",ph:"911442332000"}];
+function daysAgo(d){const t=new Date();t.setDate(t.getDate()-d);return t.toISOString().slice(0,10);}
+let DONORS=[{id:"d1",name:"Aman",group:"A+",lat:28.62,lng:77.21,ph:"919899011223",last:daysAgo(120)},{id:"d2",name:"Priya",group:"O+",lat:28.60,lng:77.22,ph:"919810144556",last:daysAgo(200)},{id:"d3",name:"Gurjot",group:"B+",lat:28.59,lng:77.19,ph:"919876500012",last:daysAgo(30)},{id:"d4",name:"Neha",group:"A-",lat:28.63,lng:77.23,ph:"919990122334",last:daysAgo(150)},{id:"d5",name:"Rahul",group:"O-",lat:28.55,lng:77.20,ph:"919811199887",last:daysAgo(400)},{id:"d6",name:"Sana",group:"AB+",lat:28.61,lng:77.18,ph:"919899177665",last:daysAgo(95)},{id:"d7",name:"Vikram",group:"A+",lat:28.65,lng:77.27,ph:"919810033445",last:daysAgo(20)},{id:"d8",name:"Kavya",group:"O+",lat:28.54,lng:77.24,ph:"919958011220",last:daysAgo(180)},{id:"d9",name:"Arjun",group:"B-",lat:28.58,lng:77.25,ph:"919811790876",last:daysAgo(250)},{id:"d10",name:"Meera",group:"A+",lat:28.60,lng:77.15,ph:"919899055443",last:daysAgo(140)},{id:"d12",name:"Simran",group:"AB-",lat:28.66,lng:77.20,ph:"919871022311",last:daysAgo(110)}];
+let S={stage:"start",group:null,units:2,hosp:null,t0:0,timer:null,pending:[],accepted:[],sweep:0,meDonor:"d1",quizStep:0,quizFor:null,severity:"Critical <1hr",sosUnits:2,sosGroup:"A+",eta:{},escalated:false,escTimer:null};
+function hav(a,b,c,d){const R=6371,t=Math.PI/180,x=(c-a)*t,y=(d-b)*t,h=Math.sin(x/2)**2+Math.cos(a*t)*Math.cos(c*t)*Math.sin(y/2)**2;return 2*R*Math.asin(Math.sqrt(h));}
+function kmTo(d){return hav(userLoc.lat,userLoc.lng,d.lat,d.lng);}
+function elig(d){return (Date.now()-new Date(d.last).getTime())/864e5>=90;}
+function fmt(s){return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");}
+function toast(m){const e=document.createElement("div");e.className="mono text-[12px] font-extrabold px-4 py-2.5";e.style.cssText="background:#BEF264;color:#000;border:2.5px solid #000;box-shadow:4px 4px 0 #000";e.textContent="> "+m;toasts.appendChild(e);setTimeout(()=>e.remove(),2800);}
+function scrollMe(){chatMe.scrollTop=chatMe.scrollHeight;} function scrollD(){chatDonor.scrollTop=chatDonor.scrollHeight;}
+function bubbleMe(html){chatMe.insertAdjacentHTML("beforeend",`<div class="msg-in flex justify-end"><div class="bubble-me max-w-[85%] px-3.5 py-2.5 text-[13.5px] font-semibold">${html}</div></div>`);scrollMe();}
+function bubbleBot(html){chatMe.insertAdjacentHTML("beforeend",`<div class="msg-in flex gap-2"><div class="w-7 h-7 rounded-lg grid place-items-center text-sm shrink-0 bg-[#E11D48] text-white border-2 border-[#160609]">🤖</div><div class="bubble-bot max-w-[85%] px-3.5 py-2.5 text-[13.5px] font-medium">${html}</div></div>`);scrollMe();}
+async function botSay(html,delay=750){botStatus.textContent="typing…";const t=document.createElement("div");t.className="flex gap-2";t.innerHTML=`<div class="w-7 h-7 rounded-lg bg-[#E11D48] border-2 border-[#160609]"></div><div class="bubble-bot px-4 py-3 typing"><span></span> <span></span> <span></span></div>`;chatMe.appendChild(t);scrollMe();await new Promise(r=>setTimeout(r,delay));t.remove();bubbleBot(html);botStatus.textContent="online • replies instantly";}
+function quickMe(arr){quickMeBox(arr);}
+function quickMeBox(arr){const q=document.getElementById("quickMe");q.innerHTML="";arr.forEach(a=>{const b=document.createElement("button");b.className="chip mono text-[12px] font-extrabold px-3.5 py-2 rounded-full bg-white";b.textContent=a.label;b.onclick=a.fn;q.appendChild(b);});}
+function quickD(arr){const q=document.getElementById("quickDonor");q.innerHTML="";arr.forEach(a=>{const b=document.createElement("button");b.className="mono text-[11px] font-extrabold px-3 py-2 rounded-full";b.style.cssText=a.primary?"background:#25D366;color:#fff;border:2px solid #fff":"background:rgba(255,255,255,.12);color:#fff;border:2px solid rgba(255,255,255,.3)";b.textContent=a.label;b.onclick=a.fn;q.appendChild(b);});}
+function dMsg(html,me=false){chatDonor.insertAdjacentHTML("beforeend",me?`<div class="msg-in flex justify-end"><div class="max-w-[85%] px-3 py-2 text-[12.5px] font-semibold text-white" style="background:#005C4B;border-radius:12px 4px 12px 12px">${html}</div></div>`:`<div class="msg-in flex"><div class="bubble-donor max-w-[88%] px-3 py-2 text-[12.5px] font-medium">${html}<div class="mono text-[9px] text-right opacity-50">${kmOfMe()}km ✓✓</div></div></div>`);scrollD();}
+function kmOfMe(){const m=DONORS.find(d=>d.id===S.meDonor);return m?kmTo(m).toFixed(1):"?";}
+function setView(v){const onR="text-[12px] font-extrabold px-3.5 py-1.5 rounded-full bg-white text-black",off="text-[12px] font-extrabold px-3.5 py-1.5 rounded-full text-white/60";tabR.className=off;tabD.className=off;tabS.className=off+" hidden sm:block";if(v==="r"){views.className="grid gap-4 items-start";paneMe.classList.remove("hidden");paneDonor.classList.add("hidden");tabR.className=onR;}if(v==="d"){views.className="grid gap-4 items-start";paneMe.classList.add("hidden");paneDonor.classList.remove("hidden");tabD.className=onR;}if(v==="s"){views.className="grid gap-4 items-start lg:grid-cols-[1.05fr_.95fr]";paneMe.classList.remove("hidden");paneDonor.classList.remove("hidden");tabS.className=onR;}}
+function askLocation(){if(!navigator.geolocation)return;navigator.geolocation.getCurrentPosition(p=>{userLoc={lat:p.coords.latitude,lng:p.coords.longitude,label:p.coords.latitude.toFixed(2)+","+p.coords.longitude.toFixed(2)};locLabel.textContent=userLoc.label;toast("GPS LOCKED");},()=>{},{timeout:5000});}
+// BOT FLOW
+async function restart(){chatMe.innerHTML="";chatDonor.innerHTML="";quickDonor.innerHTML="";S={...S,stage:"start",group:null,units:2,hosp:null,pending:[],accepted:[],quizStep:0,eta:{},escalated:false};clearInterval(S.timer);clearTimeout(S.escTimer);clock.textContent="00:00";liveBadge.classList.add("hidden");sosBar.classList.add("hidden");meDonor.innerHTML=DONORS.map(d=>`<option value="${d.id}" ${d.id===S.meDonor?"selected":""}>${d.name} ${d.group}</option>`).join("");updateTools();await botSay(`🚨 <b>SOS mode.</b> I'm Rakt Bot. Rohan needs blood — I'll line up donors in ~60 sec.<br><span class="mono text-[11px]">28L e-RaktKosh donors • only eligible + compatible get pinged</span><div class="mono text-[11px] mt-2">EMERGENCY? Hit <b>SOS</b> (floating red) for 1-tap broadcast with severity.</div>`);quickMeBox([{label:"🚨 FIND BLOOD NOW",fn:()=>{bubbleMe("🚨 FIND BLOOD NOW");askGroup();}},{label:"⚡ 1-TAP SOS",fn:openSOS}]);dMsg(`<b>📻 Standby…</b> You are <b>${DONORS.find(d=>d.id===S.meDonor).name}</b>. Requests land here only if you're <b>compatible + eligible</b>.`);}
+async function askGroup(){S.stage="group";await botSay(`What's the <b>patient's blood group?</b> <span class="mono text-[11px]">— one tap, no confusion</span>`);quickMeBox(GROUPS.map(g=>({label:g,fn:()=>{bubbleMe(`<b>${g}</b>`);pickGroup(g);}})));}
+async function pickGroup(g){S.group=g;quickMeBox([]);await botSay(`Locked <b class="mono bg-black text-[#BEF264] px-1.5">${g}</b> — accepts <b>${COMPAT[g].join(", ")}</b>. 📍 scanning banks near <b>${userLoc.label}</b>…`,900);showBanks();}
+async function showBanks(){S.stage="banks";const sorted=[...BANKS].map(b=>({...b,km:kmTo(b)})).sort((a,b)=>a.km-b.km);S.hosp=sorted[0].n;const rows=sorted.slice(0,4).map((b,i)=>`<div class="flex items-center gap-2 border-2 border-[#160609] bg-white px-2.5 py-2 ${i===0?"":"opacity-90"}"><span class="font-extrabold text-[13px] flex-1">${i===0?"📍 ":"🏥 "}${b.n}</span><span class="mono text-[11px] font-extrabold">${b.km.toFixed(1)}km</span><span class="mono text-[10px] font-extrabold ${b.stock==="YES"?"text-green-700":"text-amber-600"}">${b.stock}</span></div>`).join("");await botSay(`<b class="mono text-[11px]">NEAREST BANKS ↓</b><div class="space-y-1.5 mt-2">${rows}</div>${sorted[0].km>20?`<div class="mt-2 bg-[#FEF3C7] border-2 border-[#160609] p-2 text-[12.5px] font-bold">⚠️ Nearest ${sorted[0].km.toFixed(0)}km — 12% districts are &gt;100km. Donors come to you.</div>`:""}`);quickMeBox([{label:"🔍 Banks far — find donors",fn:()=>{bubbleMe("Find donors near me");askUnits();}},{label:"Use nearest bank",fn:()=>{bubbleMe("Use "+S.hosp);askUnits();}}]);}
+async function askUnits(){S.stage="units";await botSay(`How many <b>units</b>?<div class="flex items-center gap-3 mt-2"><button onclick="bumpU(-1)" class="chip w-10 h-10 rounded-full bg-white text-xl font-black">−</button><span id="uVal" class="tick text-[26px] font-extrabold">2</span><button onclick="bumpU(1)" class="chip w-10 h-10 rounded-full bg-[#E11D48] text-white text-xl font-black">+</button><button onclick="confirmUnits()" class="chip mono text-[12px] font-extrabold px-4 py-2.5 rounded-full bg-[#160609] text-white ml-1">OK →</button></div><div class="mono text-[10px] mt-1 opacity-60">hospital: ${S.hosp} • tap +/− then OK</div>`);quickMeBox([]);}
+function bumpU(d){S.units=Math.min(6,Math.max(1,S.units+d));const e=document.getElementById("uVal");if(e)e.textContent=S.units;}
+async function confirmUnits(){bubbleMe(`<b>${S.units} units</b> @ ${S.hosp}`);const c=COMPAT[S.group];await botSay(`Signal ready — pinging <b>${c.join(", ")}</b> donors…<div class="mt-2 bg-[#160609] text-[#BEF264] mono text-[11.5px] font-bold p-3 rounded-xl">🩸 SOS ${S.group} — Rohan 24M — ${S.units}U ${S.group} (OK ${c.join("/")}) @ ${S.hosp} — reply YES</div>`);quickMeBox([{label:"📤 TRANSMIT NOW",fn:transmit}]);}
+async function transmit(){bubbleMe("📤 TRANSMIT NOW");return fireBroadcast(S.group,S.units,S.hosp,S.severity||"Urgent <4hr");}
+async function fireBroadcast(group,units,hosp,severity){S.group=group;S.units=units;S.hosp=hosp||S.hosp||"AIIMS";S.severity=severity;S.stage="live";const c=COMPAT[group];S.pending=DONORS.filter(d=>c.includes(d.group)&&elig(d)).map(d=>({...d,km:kmTo(d)})).sort((a,b)=>a.km-b.km).slice(0,6);S.accepted=[];S.escalated=false;const muted=DONORS.filter(d=>c.includes(d.group)&&!elig(d)).length;S.t0=Date.now();clearInterval(S.timer);clearTimeout(S.escTimer);S.timer=setInterval(()=>{const v=fmt((Date.now()-S.t0)/1000);clock.textContent=v;const e=document.getElementById("sosEta");if(e)e.textContent=v;},1000);liveBadge.classList.remove("hidden");sosBar.classList.remove("hidden");sosBarTxt.textContent=`🚨 SOS LIVE • ${group} × ${units}U • ${severity}`;actDir.href=`https://www.google.com/maps/search/${encodeURIComponent(S.hosp)}`;saveHistory("live");await botSay(`📡 <b>ON AIR [${severity}].</b> Pinged <b>${S.pending.length}</b> eligible • muted <b>${muted} recent (&lt;90d)</b>.<br><span class="mono text-[11px]">No reply in 25s → I auto-expand radius + re-ping. Donors: tap ACCEPT → ON MY WAY for ETA.</span><div class="actionbar mt-2"><a href="#" onclick="return shareSOS()">↗ SHARE SOS</a><a href="tel:108">🚑 108</a><a href="https://www.google.com/maps/search/${encodeURIComponent(S.hosp)}" target="_blank">🧭 ROUTE</a></div>`);quickMeBox([{label:"✔ Got blood — close",fn:fulfilledSOS},{label:"➕ Add note",fn:()=>bubbleBot("Note pinned — donors see: <b>please carry ID + eat iron-rich meal</b>")}]);pushToDonors();S.pending.forEach((d,i)=>setTimeout(()=>{if(S.stage==="live"&&i<3)donorAccepts(d.id,true);},2600+i*3400));S.escTimer=setTimeout(escalate,25000);if(innerWidth>=1024)setView("s");}
+async function escalate(){if(S.stage!=="live"||S.accepted.length>0||S.escalated)return;S.escalated=true;const c=COMPAT[S.group];const extra=DONORS.filter(d=>c.includes(d.group)&&elig(d)&&!S.pending.find(p=>p.id===d.id)).map(d=>({...d,km:kmTo(d)})).sort((a,b)=>a.km-b.km).slice(0,4);S.pending=S.pending.concat(extra);radarLabel.textContent=`EXPANDED +${extra.length} FAR DONORS`;bubbleBot(`⚠️ <b>No accepts in 25s — escalated.</b> Radius expanded +${extra.length} farther donors re-pinged. Severity <b>${S.severity}</b> pushed to front.`);toast(`Escalated +${extra.length} donors`);pushToDonors();extra.forEach((d,i)=>setTimeout(()=>donorAccepts(d.id,true),2000+i*3000));}
+function pushToDonors(){const me=DONORS.find(d=>d.id===S.meDonor);const ok=S.group&&COMPAT[S.group].includes(me.group)&&elig(me)&&meAvail.checked;chatDonor.innerHTML="";if(!ok){dMsg(`🔕 <b>No alert for you</b> (${!meAvail.checked?"off-duty":!elig(me)?"donated <90d — auto-muted":"your "+me.group+" ≠ "+S.group}).<br><span class="mono text-[10px]">Switch operator above to feel an alert.</span>`);quickD([]);donorStatus.textContent="standby • no alert";return;}const c=COMPAT[S.group];dMsg(`<b>🩸 RAKT SOS — ${S.group} NEEDED</b><br>Rohan 24M • ${S.units}U ${S.group} (OK ${c.join("/")})<br>📍 ${S.hosp} • ${kmOfMe()}km • reply fast`);quickD([{label:"✓ ACCEPT",primary:true,fn:()=>startQuiz(S.meDonor)},{label:"Pass",fn:()=>{dMsg("Pass — stays open.",true);quickD([]);toast("Passed");}}]);donorStatus.textContent="CH-01 • 1 INCOMING !!";}
+function donorSwitch(){S.meDonor=meDonor.value;updateTools();if(S.stage==="live")pushToDonors();else renderDonorHint();}
+function renderDonorHint(){updateTools();}
+async function startQuiz(id){S.quizFor=id;S.quizStep=0;quickD([]);dMsg("✓ ACCEPT — checking fit…",true);await new Promise(r=>setTimeout(r,700));askQuizQ();}
+const QUIZ=["Blood in last 3 months?","Fever / meds in 14 days?","Weight under 50kg?","Can reach hospital today?"];
+async function askQuizQ(){const i=S.quizStep;const last=i===3;dMsg(`<b>Q${i+1}/4:</b> ${QUIZ[i]}<br><span class="mono text-[10px]">${last?"need YES":"need NO"}</span>`);quickD([{label:last?"YES, I can go":"YES",fn:()=>answerQuiz(true)},{label:"NO",fn:()=>answerQuiz(false)}]);}
+async function answerQuiz(yes){const i=S.quizStep;dMsg(yes?"Yes":"No",true);const fail=(i<3&&yes)||(i===3&&!yes);if(fail){dMsg(`⛔ <b>Unfit today</b> — thanks for honesty. Signal stays open.`);quickD([]);toast("Donor unfit — open");return;}S.quizStep++;if(S.quizStep<4){askQuizQ();}else{quickD([]);donorAccepts(S.quizFor,false);}}
+async function donorAccepts(id,auto){const d=S.pending.find(x=>x.id===id);if(!d||S.accepted.find(x=>x.id===id))return;S.accepted.push(d);d.last=new Date().toISOString().slice(0,10);const t=fmt((Date.now()-S.t0)/1000);const eta=S.eta[id];chatMe.insertAdjacentHTML("beforeend",`<div class="msg-in burst"><div class="bubble-bot !bg-[#F0FDF4] w-full"><div class="flex items-center gap-2"><span class="w-9 h-9 grid place-items-center font-black text-white bg-green-600 border-2 border-[#160609] rounded-xl">${d.name[0]}</span><div class="flex-1"><b>${d.name} • ${d.group}</b> <span class="mono text-[10px] bg-green-600 text-white px-1.5 py-0.5">✓ ${t}</span> ${eta?`<span class="eta-chip">🚗 ${eta} MIN</span>`:""}<div class="mono text-[10px] opacity-60">${d.km.toFixed(1)}km • verified • ${d.ph}</div></div></div><div class="flex gap-1.5 mt-2"><a href="https://wa.me/${d.ph.replace(/\D/g,"")}" target="_blank" class="chip mono text-[11px] font-extrabold flex-1 text-center py-2 rounded-xl text-white" style="background:#25D366">WA</a><a href="tel:${d.ph.replace(/\s/g,"")}" class="chip mono text-[11px] font-extrabold flex-1 text-center py-2 rounded-xl bg-[#160609] text-white">CALL</a><button onclick="onWay('${d.id}')" class="chip mono text-[11px] font-extrabold flex-1 py-2 rounded-xl bg-[#BEF264]">🚗 WAY</button></div></div></div>`);scrollMe();updateTools();if(id===S.meDonor){dMsg(`🎉 <b>You accepted!</b> Patient sees your number. Reach <b>${S.hosp}</b>.`);quickD([{label:"🚗 ON MY WAY",primary:true,fn:()=>onWay(id)}]);}toast(d.name+" accepted ✓");if(S.accepted.length>=S.units){bubbleBot(`✅ <b>${S.accepted.length}/${S.units} units covered.</b> Tap ✔ GOT BLOOD to close SOS + free donors.`);}}
+function onWay(id){const mins=10+Math.floor(Math.random()*14);S.eta[id]=mins;toast("ETA "+mins+" min — needer notified");bubbleBot(`🚗 <b>${(S.pending.find(d=>d.id===id)||{}).name||"Donor"} is rolling — ETA <span class="eta-chip">${mins} MIN</span> to ${S.hosp}. <a class="underline" target="_blank" href="https://www.google.com/maps/search/${encodeURIComponent(S.hosp)}">Track route →</a>`);dMsg(`🚗 <b>You're en route — ${mins} min.</b> Carry ID. Needer + family can track you.`,id===S.meDonor);if(id===S.meDonor)quickD([]);renderDonorHint();}
+function shareSOS(){const txt=`🩸 SOS ${S.group} × ${S.units}U @ ${S.hosp} (${S.severity}) — ${userLoc.label} — call ${"+91 98110 12345"}`;if(navigator.share){navigator.share({title:"Blood SOS",text:txt}).catch(()=>{});}else if(navigator.clipboard){navigator.clipboard.writeText(txt).then(()=>toast("SOS copied — paste to family/WA"));}else{toast("Copy: "+txt);}return false;}
+function cancelSOS(){S.stage="start";clearInterval(S.timer);clearTimeout(S.escTimer);sosBar.classList.add("hidden");liveBadge.classList.add("hidden");saveHistory("cancelled");bubbleBot("🛑 SOS ended by you. Donors stood down. History saved.");toast("SOS cancelled");}
+function fulfilledSOS(){S.stage="done";clearInterval(S.timer);clearTimeout(S.escTimer);sosBar.classList.add("hidden");liveBadge.classList.add("hidden");saveHistory("fulfilled");bubbleBot(`🎉 <b>Marked fulfilled in ${fmt((Date.now()-S.t0)/1000)}.</b> Donors earned Hero badges. Refer 1 friend → keep chain alive. <button onclick="copyReferral()" class="underline font-extrabold">Copy invite</button>`);quickMeBox([{label:"↺ New SOS",fn:restart}]);toast("✔ Closed — thank donors!");}
+function saveHistory(st){try{const h=JSON.parse(localStorage.getItem("rakt_hist")||"[]");h.unshift({g:S.group,u:S.units,h:S.hosp,s:S.severity,st,t:new Date().toLocaleString()});localStorage.setItem("rakt_hist",JSON.stringify(h.slice(0,8)));}catch(e){}}
+function showHistory(){try{const h=JSON.parse(localStorage.getItem("rakt_hist")||"[]");if(!h.length){toast("No SOS yet — hit SOS");return;}bubbleBot(`<b class="mono text-[11px]">PAST SOS ↓</b>`+h.map(x=>`<div class="mono text-[11px] border-2 border-[#160609] bg-white px-2 py-1.5 mt-1">🩸 ${x.g} × ${x.u} @ ${x.h} — ${x.s} — <b>${x.st.toUpperCase()}</b><br><span class="opacity-60">${x.t}</span></div>`).join(""));}catch(e){}}
+function openSOS(){sosModal.classList.remove("hidden");renderSOSGroups();}
+function closeSOS(){sosModal.classList.add("hidden");}
+function pickSev(b){S.severity=b.dataset.s;document.querySelectorAll("#sevRow .sev").forEach(x=>x.classList.remove("on"));b.classList.add("on");}
+function sosBump(d){S.sosUnits=Math.min(6,Math.max(1,S.sosUnits+d));sosUnitsV.textContent=S.sosUnits;}
+function renderSOSGroups(){sosGroups.innerHTML=GROUPS.map(g=>`<button onclick="S.sosGroup='${g}';renderSOSGroups()" class="chip mono text-[12px] font-extrabold py-2 rounded-xl ${S.sosGroup===g?"text-white":"bg-white"}" ${S.sosGroup===g?'style="background:#E11D48"':""}>${g}</button>`).join("");}
+async function fireSOS(){closeSOS();bubbleMe(`🚨 <b>SOS ${S.sosGroup} × ${S.sosUnits}U [${S.severity}]</b>`);S.units=S.sosUnits;const sorted=[...BANKS].map(b=>({...b,km:kmTo(b)})).sort((a,b)=>a.km-b.km);S.hosp=sorted[0].n;await botSay(`⚡ <b>Emergency mode.</b> Skipping small talk — broadcasting <b>${S.sosGroup}</b> now…`);return fireBroadcast(S.sosGroup,S.sosUnits,S.hosp,S.severity);}
+function openCompat(){compatModal.classList.remove("hidden");compatTable.innerHTML=Object.keys(COMPAT).map(k=>`<div class="flex justify-between border-b border-dashed pb-1"><span class="font-extrabold">Patient ${k}</span><span class="text-green-700">← ${COMPAT[k].join(", ")}</span></div>`).join("");}
+function closeCompat(){compatModal.classList.add("hidden");}
+function copyReferral(){const l="rakt.co/r/SAN24";if(navigator.clipboard)navigator.clipboard.writeText(l).then(()=>toast("Invite copied: "+l));else toast("Invite: "+l);}
+function updateTools(){const me=DONORS.find(d=>d.id===S.meDonor);if(!me||!toolElig)return;const days=Math.max(0,Math.ceil(90-(Date.now()-new Date(me.last).getTime())/864e5));toolElig.textContent=days===0?"✅ TODAY":"in "+days+"d ("+me.last+")";const n=S.accepted.filter(a=>a.id===me.id).length;toolBadge.textContent=n>0?"🏆 Lifesaver ×"+(n+1):(elig(me)?"💚 Ready":"⏳ Resting");}
+function sendFree(){const v=inMe.value.trim();if(!v)return;inMe.value="";const up=v.toUpperCase().replace(/\s/g,"");const found=GROUPS.find(g=>up.includes(g));bubbleMe(v);if(S.stage==="start"){askGroup();}else if(S.stage==="group"&&found){pickGroup(found);}else if(found){pickGroup(found);}else{bubbleBot(`Noted — tap a chip below to keep the demo moving 👇`);}}
+function renderDonorHintWrap(){}
+// radar
+(function(){const cv=document.getElementById("radar");if(!cv)return;const ctx=cv.getContext("2d");function size(){const r=cv.parentElement.getBoundingClientRect();cv.width=r.width*devicePixelRatio;cv.height=r.height*devicePixelRatio;ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);}size();addEventListener("resize",size);function hA(id){let h=0;for(const c of id)h=(h*31+c.charCodeAt(0))%360;return h*Math.PI/180;}function draw(){const W=cv.parentElement.getBoundingClientRect().width,H=cv.parentElement.getBoundingClientRect().height,cx=W/2,cy=H/2,R=Math.min(W,H)/2-8;ctx.clearRect(0,0,W,H);ctx.fillStyle="#FFFDF7";ctx.fillRect(0,0,W,H);for(let i=4;i>0;i--){ctx.beginPath();ctx.arc(cx,cy,R*i/4,0,7);ctx.strokeStyle="#160609";ctx.lineWidth=i===4?2:1;ctx.setLineDash(i===4?[]:[4,4]);ctx.stroke();ctx.setLineDash([]);}S.sweep+=0.035;ctx.save();ctx.translate(cx,cy);ctx.rotate(S.sweep);const gr=ctx.createLinearGradient(0,0,R,0);gr.addColorStop(0,"rgba(225,29,72,0)");gr.addColorStop(1,"rgba(225,29,72,.5)");ctx.fillStyle=gr;ctx.beginPath();ctx.moveTo(0,0);ctx.arc(0,0,R,-.45,0);ctx.fill();ctx.strokeStyle="#E11D48";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(R,0);ctx.stroke();ctx.restore();const all=[...DONORS.map(d=>({...d,kind:elig(d)?"ok":"mute"})),...BANKS.map(b=>({...b,id:b.n,kind:"bank"}))];radarCount.textContent=all.length+" SIGNALS";all.forEach(p=>{const a=hA(p.id||p.n);const dist=p.km!=null?p.km:kmTo(p);const rr=Math.min(R-6,8+Math.log10(dist+1.2)*R*.4);const x=cx+Math.cos(a)*rr,y=cy+Math.sin(a)*rr;let diff=(S.sweep-a)%(Math.PI*2);if(diff<0)diff+=Math.PI*2;const glow=diff<.7?(1-diff/.7):0;ctx.beginPath();ctx.arc(x,y,(p.kind==="bank"?5:4)+glow*3,0,7);ctx.fillStyle=p.kind==="bank"?"#E11D48":p.kind==="ok"?"#16a34a":"#9ca3af";ctx.fill();ctx.lineWidth=2;ctx.strokeStyle="#160609";ctx.stroke();if(glow>.4){ctx.beginPath();ctx.arc(x,y,9+glow*7,0,7);ctx.strokeStyle=`rgba(225,29,72,${glow})`;ctx.stroke();}});ctx.fillStyle="#160609";ctx.beginPath();ctx.arc(cx,cy,6,0,7);ctx.fill();ctx.fillStyle="#BEF264";ctx.beginPath();ctx.arc(cx,cy,2.8,0,7);ctx.fill();requestAnimationFrame(draw);}draw();})();
+meDonor.innerHTML=DONORS.map(d=>`<option value="${d.id}">${d.name} ${d.group}</option>`).join("");
+renderSOSGroups();updateTools();
+setView(innerWidth>=1024?"s":"r");
+restart();askLocation();
+</script>
+</body>
+</html>
