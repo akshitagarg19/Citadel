@@ -1,224 +1,896 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>RaktCo — Chat Dispatch</title>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<title>Rakt — Blood Help</title>
 <script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=JetBrains+Mono:wght@600;800&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@400;600;700;800&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
 <style>
-body{font-family:'Plus Jakarta Sans',system-ui;background:#0E0A0C;color:#1c0a0e}
-.mono{font-family:'JetBrains Mono',monospace}
-.chat-bg-patient{background:#FFF3F4;background-image:radial-gradient(rgba(225,29,72,.10) 1px,transparent 1px);background-size:20px 20px}
-.chat-bg-donor{background:#0B141A;background-image:radial-gradient(rgba(255,255,255,.06) 1px,transparent 1px);background-size:18px 18px}
-.bubble-bot{background:#fff;border:2px solid #160609;box-shadow:4px 4px 0 #160609;border-radius:4px 18px 18px 18px}
-.bubble-me{background:#160609;color:#fff;border-radius:18px 4px 18px 18px;box-shadow:4px 4px 0 rgba(225,29,72,.4)}
-.bubble-donor{background:#fff;color:#111;border-radius:4px 16px 16px 16px}
-.chip{transition:all .15s;border:2px solid #160609;box-shadow:3px 3px 0 #160609}
-.chip:active{transform:translate(2px,2px);box-shadow:0 0 0 #160609}
-.chip:hover{background:#BEF264}
-.typing span{width:7px;height:7px;border-radius:99px;background:#160609;display:inline-block;animation:bl 1s infinite}
-.typing span:nth-child(2){animation-delay:.15s}.typing span:nth-child(3){animation-delay:.3s}
-@keyframes bl{0%,100%{opacity:.25;transform:translateY(0)}50%{opacity:1;transform:translateY(-3px)}}
-.msg-in{animation:pop .35s cubic-bezier(.2,1.2,.3,1) both}
-@keyframes pop{from{transform:translateY(10px) scale(.97);opacity:0}to{transform:none;opacity:1}}
-.tick{font-variant-numeric:tabular-nums}
-.pulse-dot{animation:pd 1.4s infinite}
-@keyframes pd{0%{box-shadow:0 0 0 0 rgba(225,29,72,.6)}70%{box-shadow:0 0 0 10px rgba(225,29,72,0)}100%{box-shadow:0 0 0 0 rgba(225,29,72,0)}}
-#radar{width:100%;height:100%;display:block}
-.thin-sb::-webkit-scrollbar{width:5px}.thin-sb::-webkit-scrollbar-thumb{background:rgba(0,0,0,.3);border-radius:99px}
-.burst{animation:burst .6s ease both}
-@keyframes burst{0%{transform:scale(.5)}60%{transform:scale(1.15)}100%{transform:scale(1)}}
-.sos-fab{position:fixed;right:16px;bottom:18px;z-index:50;width:68px;height:68px;border-radius:22px;background:#E11D48;color:#fff;font-weight:900;border:3px solid #160609;box-shadow:6px 6px 0 #160609;animation:pd 1.6s infinite}
-.sos-fab:active{transform:translate(3px,3px);box-shadow:2px 2px 0 #160609}
-.emg-flash{animation:emg 1s infinite}
-@keyframes emg{0%,100%{background:#E11D48}50%{background:#9F1239}}
-.sev{border:2px solid #160609;padding:8px 0;border-radius:14px;font-weight:800;font-size:12px;flex:1}
-.sev.on{box-shadow:3px 3px 0 #160609;transform:translate(-1px,-1px)}
-.modal-bg{background:rgba(22,6,9,.65);backdrop-filter:blur(3px)}
-.eta-chip{background:#BEF264;border:2px solid #160609;font-family:'JetBrains Mono';font-weight:800;font-size:11px;padding:2px 8px;border-radius:99px}
-.actionbar{display:flex;gap:6px;flex-wrap:wrap}
-.actionbar a,.actionbar button{flex:1;min-width:70px;text-align:center;font-family:'JetBrains Mono';font-size:11px;font-weight:800;border:2px solid #160609;border-radius:12px;padding:9px 4px;background:#fff;box-shadow:3px 3px 0 #160609}
-.toolgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.toolcard{border:2px solid #160609;border-radius:14px;padding:10px;background:#fff;box-shadow:3px 3px 0 #160609}
+body{font-family:'Manrope',system-ui;background:#FAF5F0;color:#2A1215;background-image:radial-gradient(rgba(130,14,31,.055) 1px,transparent 1px);background-size:26px 26px}
+.display{font-family:'Fraunces',serif;letter-spacing:-.01em}
+.mono{font-family:'Manrope',sans-serif;letter-spacing:.04em}
+.tick{font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums}
+.card{background:#fff;border:1px solid #EDD9D3;border-radius:24px;box-shadow:0 24px 60px -28px rgba(130,14,31,.25)}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;font-weight:800;border-radius:18px;min-height:58px;padding:14px 20px;font-size:16px;border:1px solid #E7C9C1;background:#fff;box-shadow:0 8px 20px -10px rgba(130,14,31,.25);transition:transform .12s,box-shadow .12s;cursor:pointer;width:100%}
+.btn:active{transform:translateY(2px);box-shadow:0 2px 8px -4px rgba(130,14,31,.25)}
+.btn-red{background:linear-gradient(150deg,#C8102E,#7A0F24);color:#fff;border:none;box-shadow:0 20px 44px -16px rgba(200,16,46,.6)}
+.btn-dark{background:#3D0A16;color:#fff;border:none}
+.btn-green{background:linear-gradient(150deg,#15803d,#14532d);color:#fff;border:none}
+.btn-gold{background:linear-gradient(135deg,#E7C66B,#C9A227);color:#3D0A16;border:none}
+.btn:disabled{opacity:.45;cursor:default}
+.bigpick{border:1px solid #E7C9C1;background:#fff;border-radius:20px;min-height:76px;font-weight:800;font-size:19px;box-shadow:0 8px 20px -12px rgba(130,14,31,.2);cursor:pointer;transition:all .15s}
+.bigpick:active{transform:scale(.97)}
+.bigpick.on{background:linear-gradient(150deg,#C8102E,#7A0F24);color:#fff;border-color:#7A0F24;box-shadow:0 16px 34px -12px rgba(200,16,46,.55)}
+.sev{border:1px solid #E7C9C1;background:#fff;border-radius:18px;padding:14px 6px;font-weight:800;font-size:15px;flex:1;cursor:pointer;min-height:64px}
+.sev.on{outline:3px solid #C9A227;box-shadow:0 12px 26px -12px rgba(130,14,31,.4)}
+.field{background:#FFF9F5;border:1px solid #E7C9C1;border-radius:16px;padding:14px 16px;font-size:16px;font-weight:700;width:100%;color:#2A1215}
+.field:focus{border-color:#C8102E;box-shadow:0 0 0 3px rgba(200,16,46,.15);outline:none}
+select.field option{background:#fff}
+.stepdot{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:800;color:#B79A9C}
+.stepdot .n{width:26px;height:26px;border-radius:99px;display:grid;place-items:center;background:#F3E4DE;color:#A08A8D;font-size:13px}
+.stepdot.cur{color:#2A1215}
+.stepdot.cur .n{background:#C8102E;color:#fff}
+.stepdot.done{color:#15803d}
+.stepdot.done .n{background:#15803d;color:#fff}
+.tag{display:inline-block;font-size:11px;font-weight:800;border-radius:99px;padding:3px 12px}
+.tag-grey{background:#F3E4DE;color:#7A5A5E}
+.tag-green{background:#DCFCE7;color:#15803d}
+.tag-gold{background:linear-gradient(135deg,#E7C66B,#C9A227);color:#3D0A16}
+.tag-red{background:#FEE2E2;color:#B91C1C}
+.switch{position:relative;width:58px;height:32px;flex-shrink:0;cursor:pointer}
+.switch input{opacity:0;width:0;height:0}
+.switch .tr{position:absolute;inset:0;background:#E5D5CF;border-radius:99px;transition:.2s}
+.switch .tr:before{content:"";position:absolute;width:24px;height:24px;left:4px;top:4px;background:#fff;border-radius:99px;transition:.2s;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+.switch input:checked + .tr{background:#15803d}
+.switch input:checked + .tr:before{transform:translateX(26px)}
+.live-dot{width:10px;height:10px;border-radius:99px;background:#22c55e;animation:blink 1.6s infinite}
+@keyframes blink{0%{box-shadow:0 0 0 0 rgba(34,197,94,.6)}70%{box-shadow:0 0 0 10px rgba(34,197,94,0)}100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}}
+#bloodFloat{position:fixed;inset:0;z-index:0;pointer-events:none}
+main,.sticky{position:relative;z-index:1}
+.ecgstrip{height:26px;background:linear-gradient(180deg,#2A0712,#3D0A16);overflow:hidden;position:relative;z-index:1}
+.ecgstrip svg{width:200%;height:100%;display:block;animation:ecgmove 7s linear infinite}
+@keyframes ecgmove{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.radarbox{border-radius:20px;overflow:hidden;position:relative;background:#FFFDF7;border:1px solid #EDD9D3}
+.radarbox canvas{width:100%;height:100%;display:block}
+.sos-float{position:fixed;right:16px;bottom:18px;z-index:50;width:76px;height:76px;border-radius:24px;background:linear-gradient(160deg,#C8102E,#7A0F24);color:#fff;font-weight:900;font-size:15px;border:2px solid #fff;box-shadow:0 18px 44px -12px rgba(200,16,46,.65),0 0 0 6px rgba(200,16,46,.12);animation:fabfloat 4s ease-in-out infinite,fabglow 2.4s ease-in-out infinite;cursor:pointer}
+@keyframes fabfloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+@keyframes fabglow{0%,100%{box-shadow:0 18px 44px -12px rgba(200,16,46,.65),0 0 0 6px rgba(200,16,46,.12)}50%{box-shadow:0 18px 54px -10px rgba(200,16,46,.8),0 0 0 10px rgba(200,16,46,.06)}}
+.modal-bg{background:rgba(42,10,22,.6);backdrop-filter:blur(3px)}
+.pop{animation:pop .35s cubic-bezier(.2,1.2,.3,1) both}
+@keyframes pop{from{transform:translateY(12px) scale(.98);opacity:0}to{transform:none;opacity:1}}
+.thin-sb::-webkit-scrollbar{width:6px}.thin-sb::-webkit-scrollbar-thumb{background:#E5C9C1;border-radius:99px}
+.staffbox{border-top:1px solid rgba(255,255,255,.15);margin-top:6px;padding-top:6px}
+.staffbox summary{cursor:pointer;font-size:11px;font-weight:800;color:rgba(255,255,255,.65);padding:6px 2px;list-style:none}
+.staffbox summary::-webkit-details-marker{display:none}
+.staffbox summary:before{content:"+ "}
+.staffbox[open] summary:before{content:"– "}
+.quizbtn{min-height:60px;border-radius:16px;font-weight:800;font-size:16px;border:1px solid #E7C9C1;background:#fff;flex:1;cursor:pointer}
+.quizbtn.yes-on{background:#15803d;color:#fff;border-color:#15803d}
+.quizbtn.no-on{background:#3D0A16;color:#fff;border-color:#3D0A16}
+@media (prefers-reduced-motion:reduce){.ecgstrip svg{animation:none}#bloodFloat{display:none}.sos-float{animation:none}.live-dot{animation:none}}
 </style>
 </head>
 <body class="min-h-screen">
+<canvas id="bloodFloat" aria-hidden="true"></canvas>
+<div class="ecgstrip" aria-hidden="true"><svg viewBox="0 0 600 26" preserveAspectRatio="none"><path d="M0 13 H120 L130 13 L135 4 L141 22 L147 13 H220 L230 13 L235 4 L241 22 L247 13 H320 L330 13 L335 4 L341 22 L347 13 H420 L430 13 L435 4 L441 22 L447 13 H520 L530 13 L535 4 L541 22 L547 13 H600" fill="none" stroke="#E7C66B" stroke-width="1.6"/><path d="M0 13 H120 L130 13 L135 4 L141 22 L147 13 H220 L230 13 L235 4 L241 22 L247 13 H320" fill="none" stroke="#E7C66B" stroke-width="1.6" transform="translate(300,0)"/></svg></div>
 
-<div class="bg-[#160609] text-white sticky top-0 z-40">
+<!-- FIRST SCREEN -->
+<div id="landing" class="fixed inset-0 z-[60] overflow-y-auto" style="background:linear-gradient(180deg,#FBF3EC 0%,#FAF5F0 55%,#F6E9E2 100%)">
+<div class="min-h-full flex flex-col items-center justify-center px-5 py-10 max-w-xl mx-auto text-center">
+<div class="w-16 h-16 grid place-items-center text-3xl text-white rounded-3xl" style="background:linear-gradient(160deg,#C8102E,#7A0F24);box-shadow:0 20px 44px -14px rgba(200,16,46,.6)">🩸</div>
+<div class="mono text-[11px] font-extrabold tracking-widest mt-4" style="color:#A3162E">RAKT • BLOOD HELP</div>
+<h1 class="display font-bold mt-2" style="font-size:clamp(34px,7vw,52px);line-height:1.02;color:#2A1215">One tap can<br>save a life.</h1>
+<p class="mt-2 font-semibold" style="color:#7A5A5E">Free • No app needed</p>
+<button onclick="chooseRole('need')" class="w-full mt-7 rounded-3xl p-5 text-left text-white" style="background:linear-gradient(150deg,#C8102E,#7A0F24);box-shadow:0 24px 54px -18px rgba(200,16,46,.65)">
+<div class="text-[26px]">🩸</div>
+<div class="font-extrabold text-[22px] leading-tight mt-1">I Need Blood</div>
+<div class="text-[14px] opacity-85 font-semibold">donors near you in ~1 min</div>
+</button>
+<button onclick="chooseRole('donate')" class="w-full mt-3 rounded-3xl p-5 text-left text-white" style="background:linear-gradient(150deg,#15803d,#14532d);box-shadow:0 24px 54px -18px rgba(20,83,45,.55)">
+<div class="text-[26px]">💚</div>
+<div class="font-extrabold text-[22px] leading-tight mt-1">I Want to Donate</div>
+<div class="text-[14px] opacity-85 font-semibold">pinged only when matched</div>
+</button>
+<button onclick="chooseRole('em')" class="w-full mt-3 rounded-3xl p-5 text-left text-white" style="background:linear-gradient(150deg,#1F2937,#0F172A);box-shadow:0 24px 54px -18px rgba(15,23,42,.6);border:2px solid #E7C66B">
+<div class="text-[26px]">🚨</div>
+<div class="font-extrabold text-[22px] leading-tight mt-1">Emergency SOS <span class="text-[13px] font-bold px-2 py-0.5 rounded-full" style="background:#E7C66B;color:#0F172A">FASTEST</span></div>
+<div class="text-[14px] opacity-85 font-semibold">accident, delivery, surgery — 3 taps</div>
+</button>
+<button onclick="chooseRole('staff')" class="w-full mt-4 rounded-2xl py-3.5 font-extrabold text-[15px] bg-white" style="border:1px solid #E7C9C1">Staff →</button>
+<div class="mono text-[11px] font-bold mt-5" style="color:#A08A8D">28L donors • 90-day safety gap • number shared only on accept</div>
+</div>
+</div>
+
+<div class="text-white sticky top-0 z-40" style="background:rgba(61,10,22,.96);backdrop-filter:blur(12px)">
 <div class="max-w-7xl mx-auto px-4 py-2.5 flex items-center gap-2.5">
-<div class="w-9 h-9 grid place-items-center text-lg bg-[#E11D48] border-2 border-white rounded-xl">🩸</div>
-<div><div class="font-extrabold leading-none">RAKT//CHAT <span class="mono text-[10px] bg-[#BEF264] text-black px-1.5 py-0.5 rounded ml-1">BOT v3</span></div><div class="mono text-[10px] text-white/60">no forms • just talk • ⏱ <span id="clock" class="tick">00:00</span> <span id="liveBadge" class="hidden text-[#BEF264]">● LIVE</span></div></div>
+<div onclick="goLanding()" title="Home" style="cursor:pointer" class="w-9 h-9 grid place-items-center text-lg rounded-xl" ><span class="w-9 h-9 grid place-items-center text-lg bg-[#E11D48] border-2 border-white rounded-xl">🩸</span></div>
+<div><div class="font-extrabold leading-none">Rakt • Blood Help</div><div class="mono text-[10px] text-white/60">⏱ <span id="clock" class="tick">00:00</span> <span id="liveBadge" class="hidden" style="color:#E7C66B">● LIVE</span></div></div>
 <div class="flex-1"></div>
 <div class="flex bg-white/10 rounded-full p-1 gap-1">
-<button id="tabR" onclick="setView('r')" class="text-[12px] font-extrabold px-3.5 py-1.5 rounded-full bg-white text-black">YOU</button>
-<button id="tabD" onclick="setView('d')" class="text-[12px] font-extrabold px-3.5 py-1.5 rounded-full text-white/60">DONOR</button>
-<button id="tabS" onclick="setView('s')" class="text-[12px] font-extrabold px-3.5 py-1.5 rounded-full text-white/60 hidden sm:block">BOTH ★</button>
+<button id="tabNeed" onclick="nav('need')" class="text-[13px] font-extrabold px-4 py-2.5 rounded-full bg-white text-black">Need</button>
+<button id="tabDonate" onclick="nav('donate')" class="text-[13px] font-extrabold px-4 py-2.5 rounded-full text-white/60">Donate</button>
+<button id="tabEm" onclick="nav('em')" class="text-[13px] font-extrabold px-4 py-2.5 rounded-full text-white/60">SOS</button>
 </div>
 </div>
+<details class="staffbox max-w-7xl mx-auto px-4"><summary>Staff / Hospital / Bank tools</summary><div class="flex gap-2 pb-2 flex-wrap" id="staffRow">
+<button id="tabTeam" onclick="nav('team')" style="font-size:11px;font-weight:800;padding:8px 14px;border-radius:99px;background:rgba(255,255,255,.08);color:rgba(255,255,255,.75);border:1px solid rgba(255,255,255,.2)">Team</button>
+<button id="tabHosp" onclick="nav('hosp')" style="font-size:11px;font-weight:800;padding:8px 14px;border-radius:99px;background:rgba(255,255,255,.08);color:rgba(255,255,255,.75);border:1px solid rgba(255,255,255,.2)">Hospital</button>
+<button id="tabCircle" onclick="nav('circle')" style="font-size:11px;font-weight:800;padding:8px 14px;border-radius:99px;background:rgba(255,255,255,.08);color:rgba(255,255,255,.75);border:1px solid rgba(255,255,255,.2)">Circles</button>
+<button id="tabBank" onclick="nav('bank')" style="font-size:11px;font-weight:800;padding:8px 14px;border-radius:99px;background:rgba(255,255,255,.08);color:rgba(255,255,255,.75);border:1px solid rgba(255,255,255,.2)">Bank</button>
+</div></details>
 </div>
 
-<main class="max-w-7xl mx-auto px-3 sm:px-4 py-4">
-<div id="views" class="grid gap-4 items-start lg:grid-cols-[1.05fr_.95fr]">
+<main class="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+<div id="views" class="grid gap-6 items-start lg:grid-cols-[1.05fr_.95fr]">
 
-<!-- LEFT: YOU + BOT -->
-<section id="paneMe" class="bg-white border-[2.5px] border-[#160609] rounded-3xl overflow-hidden flex flex-col" style="box-shadow:8px 8px 0 #160609;height:min(82vh,760px)">
-<div class="px-4 py-3 border-b-[2.5px] border-[#160609] bg-[#FFF0F2] flex items-center gap-3">
-<div class="w-10 h-10 rounded-2xl grid place-items-center text-xl text-white bg-[#E11D48] border-2 border-[#160609] pulse-dot">🤖</div>
-<div class="flex-1"><div class="font-extrabold text-[15px]">Rakt Bot <span class="mono text-[10px] text-green-700">● online</span></div><div class="mono text-[10px] font-bold opacity-60" id="botStatus">triage specialist • replies instantly</div></div>
-<button onclick="openSOS()" class="mono text-[11px] font-extrabold px-2.5 py-1.5 text-white chip" style="background:#E11D48">SOS</button>
-<button onclick="restart()" class="mono text-[11px] font-extrabold border-2 border-[#160609] px-2.5 py-1.5 bg-white chip">↺</button>
+<!-- NEED BLOOD WIZARD -->
+<section id="viewNeed" class="card p-5 sm:p-7">
+<div class="flex items-center gap-2 flex-wrap" id="ndSteps"></div>
+<div id="ndS1" class="ndstep">
+<h2 class="display font-bold text-[26px] mt-4">Which blood group is needed?</h2>
+<p class="font-semibold mt-1" style="color:#7A5A5E">Tap one. Matching types are added automatically.</p>
+<div id="ndGroups" class="grid grid-cols-4 gap-2.5 mt-4"></div>
+<div id="ndGroupHint" class="mt-3 text-[14px] font-semibold p-3 rounded-2xl" style="background:#FFF7F4;border:1px solid #F0DCD4"></div>
 </div>
-<div id="sosBar" class="hidden px-4 py-2.5 border-b-[2.5px] border-[#160609] emg-flash text-white">
-<div class="flex items-center gap-2"><span class="mono text-[11px] font-extrabold" id="sosBarTxt">🚨 SOS LIVE</span><span class="eta-chip !text-black" id="sosEta">00:00</span><div class="flex-1"></div><button onclick="cancelSOS()" class="mono text-[10px] font-extrabold bg-black px-2 py-1 rounded">END</button></div>
-<div class="actionbar mt-2">
-<a id="actShare" href="#" onclick="return shareSOS()">↗ SHARE</a>
-<a href="tel:108">🚑 108</a>
-<a id="actDir" href="#" target="_blank">🧭 ROUTE</a>
-<button onclick="fulfilledSOS()">✔ GOT BLOOD</button>
+<div id="ndS2" class="ndstep hidden">
+<h2 class="display font-bold text-[26px] mt-4">Where and how much?</h2>
+<p class="font-semibold mt-1" style="color:#7A5A5E">Almost done.</p>
+<label class="block mt-4 text-[12px] font-extrabold" style="color:#A08A8D">HOSPITAL</label>
+<select id="ndHosp" class="field mt-1"></select>
+<label class="block mt-4 text-[12px] font-extrabold" style="color:#A08A8D">BAGS NEEDED</label>
+<div class="flex items-center gap-4 mt-1">
+<button onclick="ndBump(-1)" class="bigpick w-16 !min-h-[64px] text-3xl">−</button>
+<span id="ndUnitsV" class="tick text-[34px] font-bold w-10 text-center">2</span>
+<button onclick="ndBump(1)" class="bigpick w-16 !min-h-[64px] text-3xl">+</button>
+</div>
+<label class="block mt-4 text-[12px] font-extrabold" style="color:#A08A8D">YOUR PHONE (donors call this)</label>
+<input id="ndPhone" value="+91 98110 12345" class="field mt-1"/>
+<label class="block mt-4 text-[12px] font-extrabold" style="color:#A08A8D">HOW URGENT?</label>
+<div class="flex gap-2 mt-1" id="ndSevRow">
+<button data-s="Critical <1hr" onclick="ndPickSev(this)" class="sev on" style="background:#FEE2E2">🔴 Critical</button>
+<button data-s="Urgent <4hr" onclick="ndPickSev(this)" class="sev" style="background:#FEF3C7">🟡 Urgent</button>
+<button data-s="Scheduled" onclick="ndPickSev(this)" class="sev" style="background:#DCFCE7">🟢 Planned</button>
+</div>
+<label class="block mt-4 text-[12px] font-extrabold" style="color:#A08A8D">WHAT IS NEEDED?</label>
+<div class="flex gap-2 mt-1" id="ndCompRow">
+<button data-c="Whole blood" onclick="ndPickComp(this)" class="sev on">🩸 Blood</button>
+<button data-c="Platelets" onclick="ndPickComp(this)" class="sev">🟡 Platelets</button>
+<button data-c="Plasma" onclick="ndPickComp(this)" class="sev">🟣 Plasma</button>
+</div>
+<div class="flex gap-2 mt-5">
+<button onclick="ndShow(1)" class="btn" style="width:auto;padding-left:22px;padding-right:22px">←</button>
+<button onclick="ndShow(3)" class="btn btn-dark" style="flex:1">Review →</button>
 </div>
 </div>
-<div id="chatMe" class="chat-bg-patient flex-1 overflow-y-auto thin-sb p-3 sm:p-4 space-y-3"></div>
-<div id="quickMe" class="px-3 pb-2 flex flex-wrap gap-2"></div>
-<div class="p-3 border-t-[2.5px] border-[#160609] bg-white flex gap-2">
-<input id="inMe" placeholder="Type blood group, e.g. A+ …" class="flex-1 border-2 border-[#160609] rounded-2xl px-4 py-2.5 font-bold text-[14px] outline-none" onkeydown="if(event.key==='Enter')sendFree()"/>
-<button onclick="sendFree()" class="w-11 h-11 grid place-items-center text-white bg-[#160609] rounded-2xl text-lg">➤</button>
+<div id="ndS3" class="ndstep hidden">
+<h2 class="display font-bold text-[26px] mt-4">Check and send</h2>
+<div id="ndReview" class="mt-3 rounded-2xl p-4" style="background:#FFF7F4;border:1px solid #F0DCD4"></div>
+<div id="ndOtp" class="mono text-[12px] font-bold mt-2" style="color:#A08A8D">Phone verifies automatically on send (mock OTP).</div>
+<div class="flex gap-2 mt-4">
+<button onclick="ndShow(2)" class="btn" style="width:auto;padding-left:22px;padding-right:22px">←</button>
+<button onclick="ndSend()" id="ndSendBtn" class="btn btn-red" style="flex:1">📤 SEND TO DONORS</button>
+</div>
+</div>
+<div id="ndS4" class="ndstep hidden">
+<div class="rounded-2xl p-4 mt-4 text-white flex items-center gap-3" style="background:linear-gradient(150deg,#1F2937,#0F172A)">
+<div class="w-11 h-11 rounded-2xl grid place-items-center text-xl shrink-0" style="background:linear-gradient(180deg,#FB4D6D,#9F1239)">🩸</div>
+<div class="flex-1 min-w-0"><div class="font-extrabold text-[15px]" id="liveTitle">Broadcasting…</div><div class="text-[12px] text-white/60" id="liveSub"></div></div>
+<div class="text-right"><div class="tick text-[20px] font-bold" id="liveTimer">00:00</div><div class="text-[10px] font-extrabold" style="color:#4ADE80">● LIVE</div></div>
+</div>
+<div id="liveSummary" class="text-[14px] font-semibold rounded-2xl p-3 mt-3" style="background:#FFF7F4;border:1px solid #F0DCD4"></div>
+<div class="text-[11px] font-extrabold tracking-widest mt-4 mb-2" style="color:#B79A9C">DONORS SAYING YES ↓</div>
+<div id="acceptFeed" class="space-y-3 max-h-[340px] overflow-auto thin-sb"></div>
+<div class="grid grid-cols-4 gap-2 mt-4">
+<button onclick="return shareSOS()" class="btn !min-h-[52px] !text-[13px]">↗ Share</button>
+<a href="tel:108" class="btn !min-h-[52px] !text-[13px]">🚑 108</a>
+<a id="liveRoute" href="#" target="_blank" class="btn !min-h-[52px] !text-[13px]">🧭 Route</a>
+<button onclick="fulfilledSOS()" class="btn btn-green !min-h-[52px] !text-[13px]">✔ Done</button>
+</div>
+<button onclick="cancelSOS()" class="w-full mt-2 py-2.5 text-[13px] font-bold" style="color:#B79A9C">End request</button>
 </div>
 </section>
 
-<!-- RIGHT: RADAR + DONOR CHAT -->
-<section id="paneDonor" class="flex flex-col gap-4">
-<div class="bg-[#160609] text-white border-[2.5px] border-[#160609] rounded-3xl overflow-hidden" style="box-shadow:8px 8px 0 rgba(225,29,72,.45)">
-<div class="flex items-center justify-between px-4 pt-3"><span class="mono text-[11px] font-extrabold text-white/80">● DONOR RADAR — YOU ARE CENTER</span><span class="mono text-[11px] font-extrabold text-[#BEF264]" id="radarCount">…</span></div>
-<div class="m-3 rounded-2xl overflow-hidden border-2 border-white/15 relative" style="height:270px;background:#FFFDF7"><canvas id="radar"></canvas>
-<div class="absolute bottom-2 left-2 mono text-[10px] font-extrabold bg-black text-[#BEF264] px-2 py-1" id="radarLabel">SCANNING…</div></div>
-<div class="mono text-[10px] font-bold px-4 pb-3 text-white/60">🟢 eligible &nbsp;⚪ muted &lt;90d &nbsp;🔴 bank &nbsp;• sweep lights them up</div>
-</div>
-
-<div class="bg-[#0B141A] border-[2.5px] border-[#160609] rounded-3xl overflow-hidden flex flex-col" style="box-shadow:8px 8px 0 #160609;height:min(52vh,480px)">
-<div class="px-4 py-2.5 flex items-center gap-3" style="background:#075E54">
-<div class="w-9 h-9 rounded-full bg-white/20 grid place-items-center">📻</div>
-<div class="flex-1"><div class="font-extrabold text-white text-[14px]">Donor WhatsApp</div><div class="mono text-[10px] text-white/70" id="donorStatus">standby • <select id="meDonor" onchange="donorSwitch()" class="text-black font-bold rounded px-1"></select> <label class="text-white/80 ml-1"><input type="checkbox" id="meAvail" checked onchange="renderDonorHint()" class="accent-green-500"/> on-duty</label></div></div>
-</div>
-<div id="chatDonor" class="chat-bg-donor flex-1 overflow-y-auto thin-sb p-3 space-y-2.5"></div>
-<div id="quickDonor" class="p-2.5 flex flex-wrap gap-2"></div>
-</div>
-<div class="bg-white border-[2.5px] border-[#160609] rounded-3xl p-3" style="box-shadow:6px 6px 0 #160609">
-<div class="mono text-[10px] font-extrabold opacity-60 mb-2">◉ DONOR TOOLS</div>
-<div class="toolgrid">
-<div class="toolcard"><div class="mono text-[10px] font-extrabold opacity-60">NEXT ELIGIBLE</div><div id="toolElig" class="font-extrabold text-[13px]">—</div></div>
-<div class="toolcard"><div class="mono text-[10px] font-extrabold opacity-60">BADGE</div><div id="toolBadge" class="font-extrabold text-[13px]">🌱 New</div></div>
+<!-- DONOR RADAR (right column, need view) -->
+<div id="needSide" class="flex flex-col gap-6">
+<section class="card overflow-hidden" style="background:#2A0712;border-color:#2A0712">
+<div class="flex items-center justify-between px-4 pt-3"><span class="mono text-[11px] font-extrabold text-white/80">● Donor map — you are in the middle</span><span class="mono text-[11px] font-extrabold" style="color:#E7C66B" id="radarCount">…</span></div>
+<div class="m-3 rounded-2xl overflow-hidden relative" style="height:270px;background:#FFFDF7"><canvas id="radar"></canvas>
+<div class="absolute bottom-2 left-2 mono text-[10px] font-extrabold bg-black px-2 py-1 rounded" style="color:#E7C66B" id="radarLabel">Looking for donors…</div></div>
+<div class="mono text-[11px] font-bold px-4 pb-3 text-white/60">🟢 ready to donate &nbsp;⚪ resting &nbsp;🔴 blood bank</div>
+</section>
+<section class="card p-4">
+<div class="mono text-[11px] font-extrabold" style="color:#A08A8D">◉ FOR DONORS</div>
+<div class="grid grid-cols-2 gap-2 mt-2">
+<div class="rounded-2xl p-3" style="background:#FFF7F4;border:1px solid #F0DCD4"><div class="mono text-[10px] font-extrabold" style="color:#A08A8D">NEXT ELIGIBLE</div><div id="toolElig" class="font-extrabold text-[14px]">—</div></div>
+<div class="rounded-2xl p-3" style="background:#FFF7F4;border:1px solid #F0DCD4"><div class="mono text-[10px] font-extrabold" style="color:#A08A8D">BADGE</div><div id="toolBadge" class="font-extrabold text-[14px]">🌱 New</div></div>
 </div>
 <div class="flex gap-2 mt-2">
-<button onclick="openCompat()" class="chip mono text-[11px] font-extrabold flex-1 py-2 rounded-xl bg-white">🩸 CHART</button>
-<button onclick="copyReferral()" class="chip mono text-[11px] font-extrabold flex-1 py-2 rounded-xl bg-[#BEF264]">🎁 REFER +₹50</button>
+<button onclick="openCompat()" class="btn !min-h-[50px] !text-[13px]">🩸 Chart</button>
+<button onclick="copyReferral()" class="btn btn-gold !min-h-[50px] !text-[13px]">🎁 Invite</button>
 </div>
+</section>
+</div>
+
+<!-- DONATE -->
+<section id="viewDonate" class="card p-5 sm:p-7 hidden">
+<h2 class="display font-bold text-[26px]">You, the donor 💚</h2>
+<p class="font-semibold mt-1" style="color:#7A5A5E">You only get pinged when matched and fit.</p>
+<label class="block mt-4 text-[12px] font-extrabold" style="color:#A08A8D">ACTING AS</label>
+<select id="meDonor" onchange="donorSwitch()" class="field mt-1"></select>
+<div id="meMeta" class="mono text-[12px] font-bold mt-2" style="color:#7A5A5E"></div>
+<div class="flex gap-2 mt-2" id="genderRow">
+<button onclick="setGender('Male')" data-g="Male" class="sev on !min-h-[48px] !text-[14px]">♂ Male</button>
+<button onclick="setGender('Female')" data-g="Female" class="sev !min-h-[48px] !text-[14px]">♀ Female</button>
+</div>
+<div class="grid sm:grid-cols-2 gap-2 mt-3">
+<label class="rounded-2xl p-3 flex items-center justify-between font-bold cursor-pointer" style="background:#FFF7F4;border:1px solid #F0DCD4">On duty today <span class="switch"><input id="meAvail" type="checkbox" checked onchange="renderDonate()"/><span class="tr"></span></span></label>
+<label class="rounded-2xl p-3 flex items-center justify-between font-bold cursor-pointer" style="background:#FFF7F4;border:1px solid #F0DCD4">Free this week <span class="switch"><input id="wkToggle" type="checkbox" checked onchange="wkChange()"/><span class="tr"></span></span></label>
+</div>
+<div class="mono text-[11px] font-extrabold mt-5 mb-2" style="color:#B79A9C">INCOMING REQUEST</div>
+<div id="donorReq"><div class="rounded-2xl p-5 text-center font-semibold" style="background:#FFF7F4;border:1px dashed #E7C9C1;color:#A08A8D">💤 No requests for you right now.<br><span class="text-[13px]">Send one from Need Blood to see it land here.</span></div></div>
+<div id="donorQuiz"></div>
+<details class="mt-4"><summary class="font-extrabold text-[14px] cursor-pointer" style="color:#A3162E">+ Register as a new donor</summary>
+<div class="grid grid-cols-2 gap-2 mt-2">
+<input id="dName" placeholder="Your name" class="field"/>
+<select id="dGroup" class="field font-extrabold"><option>O+</option><option>O-</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option></select>
+<input id="dPhone" placeholder="Phone" class="field col-span-2"/>
+</div>
+<button onclick="registerDonor()" class="btn btn-green mt-2">Join 28L+ lifesavers →</button></details>
+</section>
+
+<!-- DONOR RADAR (right column, donate view) -->
+<div id="donateSide" class="hidden flex-col gap-6">
+<section class="card overflow-hidden" style="background:#2A0712;border-color:#2A0712">
+<div class="flex items-center justify-between px-4 pt-3"><span class="mono text-[11px] font-extrabold text-white/80">● Live donor map</span><span class="mono text-[11px] font-extrabold" style="color:#E7C66B" id="radarCount2">…</span></div>
+<div class="m-3 rounded-2xl overflow-hidden relative" style="height:240px;background:#FFFDF7"><canvas id="radar2"></canvas>
+<div class="absolute bottom-2 left-2 mono text-[10px] font-extrabold bg-black px-2 py-1 rounded" style="color:#E7C66B" id="radarLabel2">Live</div></div>
+</section>
+</div>
+
+<!-- EMERGENCY -->
+<section id="viewEm" class="card p-5 sm:p-7 hidden" style="border:2px solid #E7C66B">
+<div class="rounded-2xl p-4 text-white flex items-center gap-3" style="background:linear-gradient(150deg,#1F2937,#0F172A)">
+<div class="text-3xl">🚨</div>
+<div><div class="font-extrabold text-[19px]">Emergency SOS</div><div class="text-[13px] text-white/60">Fastest way — 3 taps, we fill the rest</div></div>
+</div>
+<div class="mono text-[11px] font-extrabold mt-4" style="color:#A08A8D">1 • BLOOD GROUP</div>
+<div id="emGroups" class="grid grid-cols-4 gap-2 mt-2"></div>
+<div class="mono text-[11px] font-extrabold mt-4" style="color:#A08A8D">2 • HOW URGENT?</div>
+<div class="flex gap-2 mt-2" id="emSevRow">
+<button data-s="Critical <1hr" onclick="emPickSev(this)" class="sev on" style="background:#FEE2E2">🔴 Critical</button>
+<button data-s="Urgent <4hr" onclick="emPickSev(this)" class="sev" style="background:#FEF3C7">🟡 Urgent</button>
+<button data-s="Scheduled" onclick="emPickSev(this)" class="sev" style="background:#DCFCE7">🟢 Planned</button>
+</div>
+<div class="mono text-[11px] font-extrabold mt-4" style="color:#A08A8D">3 • BAGS (nearest hospital is picked for you)</div>
+<div class="flex items-center gap-4 mt-2">
+<button onclick="emBump(-1)" class="bigpick w-16 !min-h-[64px] text-3xl">−</button>
+<span id="emUnitsV" class="tick text-[34px] font-bold w-10 text-center">2</span>
+<button onclick="emBump(1)" class="bigpick w-16 !min-h-[64px] text-3xl">+</button>
+<span class="mono text-[12px] font-bold" style="color:#7A5A5E" id="emHosp"></span>
+</div>
+<button onclick="emBroadcast()" class="btn btn-red mt-5 !min-h-[68px] !text-[19px]">⚡ SEND EMERGENCY ALERT</button>
+<div id="emLive" class="hidden mt-4 rounded-2xl p-4" style="background:#F0FDF4;border:1px solid rgba(34,197,94,.4)">
+<div class="flex items-center gap-2"><span class="live-dot"></span><b>Alert is live!</b><span class="tick font-extrabold ml-auto" id="emTimer">00:00</span></div>
+<div class="mono text-[12px] font-bold mt-1" id="emStatus">…</div>
+<button onclick="nav('need');ndShow(4)" class="btn mt-3 !min-h-[52px] !text-[14px]">💬 See donor replies</button>
 </div>
 </section>
 
+<!-- STAFF: TEAM -->
+<section id="viewTeam" class="card p-5 sm:p-7 hidden">
+<h2 class="display font-bold text-[26px]">Coordinator desk</h2>
+<p class="font-semibold mt-1" style="color:#7A5A5E">Open requests, confirmations, widening, takeovers.</p>
+<div id="coordList" class="space-y-2 mt-3"></div>
+<div class="flex gap-2 mt-2 flex-wrap">
+<button onclick="coordWiden()" class="btn btn-gold !min-h-[50px] !text-[13px]" style="width:auto;flex:1">Widen +10</button>
+<button onclick="coordTakeover()" class="btn btn-dark !min-h-[50px] !text-[13px]" style="width:auto;flex:1">Take over</button>
 </div>
-<p class="mono text-center text-[10px] font-bold mt-5 text-white/40">CHAT-FIRST PROTOTYPE • TYPE OR TAP • MOCK DATA • <span id="locLabel">DELHI</span> • <button onclick="showHistory()" class="underline">HISTORY</button></p>
+<div class="mono text-[11px] font-extrabold mt-4" style="color:#A08A8D">BANK CONTACTS</div>
+<div id="coordBanks" class="mono text-[12px] font-bold space-y-1 mt-1"></div>
+<div class="mono text-[11px] font-extrabold mt-3" style="color:#A08A8D">ALERT LOG</div>
+<div id="alertLog" class="mono text-[11px] font-bold space-y-1 mt-1 max-h-[160px] overflow-auto thin-sb"></div>
+<div class="mono text-[11px] font-extrabold mt-3" style="color:#A08A8D">PAST REQUESTS</div>
+<div id="coordHist" class="mono text-[11px] font-bold space-y-1 mt-1"></div>
+</section>
+
+<!-- STAFF: HOSPITAL -->
+<section id="viewHosp" class="card p-5 sm:p-7 hidden">
+<h2 class="display font-bold text-[26px]">Hospital fast lane</h2>
+<p class="font-semibold mt-1" style="color:#7A5A5E">Mock login. Verify jumps a live request to full reach.</p>
+<div class="grid grid-cols-2 gap-2 mt-3">
+<input id="hospName" value="AIIMS" class="field"/>
+<input id="hospStaff" value="STAFF-042" class="field"/>
+</div>
+<button onclick="hospVerify()" class="btn btn-green mt-2">✓ VERIFY LIVE REQUEST</button>
+<div id="hospList" class="space-y-2 mt-3"></div>
+</section>
+
+<!-- STAFF: CIRCLES -->
+<section id="viewCircle" class="card p-5 sm:p-7 hidden">
+<h2 class="display font-bold text-[26px]">Thalassemia circles</h2>
+<p class="font-semibold mt-1" style="color:#7A5A5E">Scheduled requests to a patient's own donor group first.</p>
+<div id="circleBody" class="space-y-2 mt-3"></div>
+</section>
+
+<!-- STAFF: BANK ADMIN -->
+<section id="viewBank" class="card p-5 sm:p-7 hidden">
+<h2 class="display font-bold text-[26px]">Blood bank admin</h2>
+<p class="font-semibold mt-1" style="color:#7A5A5E">Live request, response times, stock and camps.</p>
+<div id="bankBody" class="mt-3"></div>
+</section>
+
+</div>
+<p class="mono text-center text-[10px] font-bold mt-6" style="color:#C4A9AD">Mock prototype • demo data only • <button onclick="nav('team')" class="underline">History in Team desk</button> • <span id="locLabel">DELHI</span></p>
 </main>
 
-<button id="sosFab" onclick="openSOS()" class="sos-fab">SOS</button>
-
-<div id="sosModal" class="hidden fixed inset-0 z-50 modal-bg grid place-items-center p-4">
-<div class="bg-white border-[3px] border-[#160609] rounded-3xl p-5 max-w-sm w-full" style="box-shadow:8px 8px 0 #160609">
-<div class="mono text-[11px] font-extrabold bg-[#E11D48] text-white inline-block px-2.5 py-1 rounded-lg">🚨 EMERGENCY SOS — 1 TAP</div>
-<div class="mono text-[10px] font-extrabold opacity-60 mt-3 mb-1">SEVERITY</div>
-<div class="flex gap-2" id="sevRow">
-<button data-s="Critical <1hr" onclick="pickSev(this)" class="sev on" style="background:#FEE2E2">🔴 CRITICAL<br><span class="mono text-[10px]">&lt;1 hr</span></button>
-<button data-s="Urgent <4hr" onclick="pickSev(this)" class="sev" style="background:#FEF3C7">🟡 URGENT<br><span class="mono text-[10px]">&lt;4 hr</span></button>
-<button data-s="Scheduled" onclick="pickSev(this)" class="sev" style="background:#DCFCE7">🟢 PLANNED<br><span class="mono text-[10px]">today</span></button>
-</div>
-<div class="mono text-[10px] font-extrabold opacity-60 mt-3 mb-1">BLOOD GROUP</div>
-<div id="sosGroups" class="grid grid-cols-4 gap-1.5"></div>
-<div class="mono text-[10px] font-extrabold opacity-60 mt-3 mb-1">UNITS: <span id="sosUnitsV" class="tick text-[16px]">2</span></div>
-<div class="flex items-center gap-2"><button onclick="sosBump(-1)" class="chip w-10 h-10 rounded-xl bg-white font-black">−</button><button onclick="sosBump(1)" class="chip w-10 h-10 rounded-xl bg-[#E11D48] text-white font-black">+</button><span class="mono text-[10px] opacity-60">auto-expands radius if no reply</span></div>
-<div class="flex gap-2 mt-4">
-<button onclick="closeSOS()" class="chip flex-1 py-3 font-extrabold rounded-2xl bg-white">CANCEL</button>
-<button onclick="fireSOS()" class="chip flex-1 py-3 font-extrabold rounded-2xl text-white" style="background:#E11D48">⚡ BROADCAST</button>
-</div>
-</div>
-</div>
+<button id="sosFab" onclick="nav('em')" class="sos-float">🆘<br>SOS</button>
 
 <div id="compatModal" class="hidden fixed inset-0 z-50 modal-bg grid place-items-center p-4">
-<div class="bg-white border-[3px] border-[#160609] rounded-3xl p-5 max-w-sm w-full" style="box-shadow:8px 8px 0 #160609">
-<div class="font-extrabold text-[16px]">🩸 Who can give to whom?</div>
-<div id="compatTable" class="mono text-[11px] font-bold mt-3 space-y-1"></div>
-<button onclick="closeCompat()" class="chip w-full py-2.5 mt-4 font-extrabold rounded-xl bg-[#160609] text-white">CLOSE</button>
+<div class="card p-5 max-w-sm w-full pop">
+<div class="font-extrabold text-[19px] display">🩸 Who can give to whom?</div>
+<div id="compatTable" class="mono text-[12px] font-bold mt-3 space-y-1"></div>
+<button onclick="closeCompat()" class="btn btn-dark w-full mt-4 !min-h-[52px]">CLOSE</button>
+</div>
+</div>
+
+<div id="certModal" class="hidden fixed inset-0 z-50 modal-bg grid place-items-center p-4">
+<div class="card p-6 max-w-sm w-full text-center pop">
+<div class="mono text-[10px] font-extrabold tracking-widest" style="color:#A3162E">RAKT • LIFESAVER CERTIFICATE</div>
+<div class="display font-bold text-[24px] mt-1">Thank you, <span id="certNames"></span> 🩸</div>
+<div class="mono text-[11px] mt-2" style="color:#7A5A5E" id="certMeta"></div>
+<div class="flex gap-2 mt-4"><button onclick="window.print()" class="btn btn-gold" style="flex:1">PRINT</button><button onclick="document.getElementById('certModal').classList.add('hidden')" class="btn" style="flex:1">CLOSE</button></div>
 </div>
 </div>
 
 <div id="toasts" class="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 space-y-2 w-[92%] max-w-sm"></div>
 
 <script>
-const GROUPS=["O-","O+","A-","A+","B-","B+","AB-","AB+"];
-const COMPAT={"O-":["O-"],"O+":["O-","O+"],"A-":["O-","A-"],"A+":["O-","O+","A-","A+"],"B-":["O-","B-"],"B+":["O-","O+","B-","B+"],"AB-":["O-","A-","B-","AB-"],"AB+":["O-","O+","A-","A+","B-","B+","AB-","AB+"]};
-const DELHI={lat:28.6139,lng:77.2090};
-let userLoc={...DELHI,label:"DELHI"};
-const BANKS=[{n:"AIIMS",lat:28.5672,lng:77.21,stock:"YES",ph:"911126588500"},{n:"SAFDARJUNG",lat:28.5679,lng:77.2089,stock:"YES",ph:"911126165050"},{n:"RED CROSS",lat:28.6244,lng:77.2043,stock:"LOW",ph:"911123711507"},{n:"LNJP",lat:28.6731,lng:77.2815,stock:"YES",ph:"911123236000"},{n:"MAX SAKET",lat:28.5244,lng:77.2066,stock:"LOW",ph:"911126515050"},{n:"FORTIS OKHLA",lat:28.5333,lng:77.2785,stock:"YES",ph:"911147135000"},{n:"FARIDABAD",lat:28.4089,lng:77.3178,stock:"YES",ph:"911294001221"},{n:"MEERUT 65KM",lat:28.9845,lng:77.7064,stock:"YES",ph:"911212660108"},{n:"ALWAR 150KM+",lat:27.553,lng:76.6346,stock:"LOW",ph:"911442332000"}];
-function daysAgo(d){const t=new Date();t.setDate(t.getDate()-d);return t.toISOString().slice(0,10);}
-let DONORS=[{id:"d1",name:"Aman",group:"A+",lat:28.62,lng:77.21,ph:"919899011223",last:daysAgo(120)},{id:"d2",name:"Priya",group:"O+",lat:28.60,lng:77.22,ph:"919810144556",last:daysAgo(200)},{id:"d3",name:"Gurjot",group:"B+",lat:28.59,lng:77.19,ph:"919876500012",last:daysAgo(30)},{id:"d4",name:"Neha",group:"A-",lat:28.63,lng:77.23,ph:"919990122334",last:daysAgo(150)},{id:"d5",name:"Rahul",group:"O-",lat:28.55,lng:77.20,ph:"919811199887",last:daysAgo(400)},{id:"d6",name:"Sana",group:"AB+",lat:28.61,lng:77.18,ph:"919899177665",last:daysAgo(95)},{id:"d7",name:"Vikram",group:"A+",lat:28.65,lng:77.27,ph:"919810033445",last:daysAgo(20)},{id:"d8",name:"Kavya",group:"O+",lat:28.54,lng:77.24,ph:"919958011220",last:daysAgo(180)},{id:"d9",name:"Arjun",group:"B-",lat:28.58,lng:77.25,ph:"919811790876",last:daysAgo(250)},{id:"d10",name:"Meera",group:"A+",lat:28.60,lng:77.15,ph:"919899055443",last:daysAgo(140)},{id:"d12",name:"Simran",group:"AB-",lat:28.66,lng:77.20,ph:"919871022311",last:daysAgo(110)}];
-let S={stage:"start",group:null,units:2,hosp:null,t0:0,timer:null,pending:[],accepted:[],sweep:0,meDonor:"d1",quizStep:0,quizFor:null,severity:"Critical <1hr",sosUnits:2,sosGroup:"A+",eta:{},escalated:false,escTimer:null};
-function hav(a,b,c,d){const R=6371,t=Math.PI/180,x=(c-a)*t,y=(d-b)*t,h=Math.sin(x/2)**2+Math.cos(a*t)*Math.cos(c*t)*Math.sin(y/2)**2;return 2*R*Math.asin(Math.sqrt(h));}
+// DATA
+var GROUPS=["O-","O+","A-","A+","B-","B+","AB-","AB+"];
+var COMPAT={"O-":["O-"],"O+":["O-","O+"],"A-":["O-","A-"],"A+":["O-","O+","A-","A+"],"B-":["O-","B-"],"B+":["O-","O+","B-","B+"],"AB-":["O-","A-","B-","AB-"],"AB+":["O-","O+","A-","A+","B-","B+","AB-","AB+"]};
+var TIER_CAP={1:4,2:8,3:12},TIER_TAG={1:"Unverified",2:"Checked",3:"Verified"};
+var GAP={Male:90,Female:120,Other:90};
+var DELHI={lat:28.6139,lng:77.2090};
+var userLoc={lat:DELHI.lat,lng:DELHI.lng,label:"DELHI"};
+var BANKS=[
+ {n:"AIIMS",lat:28.5672,lng:77.21,stock:"YES",ph:"911126588500"},
+ {n:"SAFDARJUNG",lat:28.5679,lng:77.2089,stock:"YES",ph:"911126165050"},
+ {n:"RED CROSS",lat:28.6244,lng:77.2043,stock:"LOW",ph:"911123711507"},
+ {n:"LNJP",lat:28.6731,lng:77.2815,stock:"YES",ph:"911123236000"},
+ {n:"MAX SAKET",lat:28.5244,lng:77.2066,stock:"LOW",ph:"911126515050"},
+ {n:"FORTIS OKHLA",lat:28.5333,lng:77.2785,stock:"YES",ph:"911147135000"},
+ {n:"FARIDABAD",lat:28.4089,lng:77.3178,stock:"YES",ph:"911294001221"},
+ {n:"MEERUT 65KM",lat:28.9845,lng:77.7064,stock:"YES",ph:"911212660108"},
+ {n:"ALWAR 150KM+",lat:27.553,lng:76.6346,stock:"LOW",ph:"911442332000"}
+];
+function daysAgo(d){var t=new Date();t.setDate(t.getDate()-d);return t.toISOString().slice(0,10);}
+var DONORS=[
+ {id:"d1",name:"Aman",group:"A+",lat:28.62,lng:77.21,ph:"919899011223",last:daysAgo(120),plat:true},
+ {id:"d2",name:"Priya",group:"O+",lat:28.60,lng:77.22,ph:"919810144556",last:daysAgo(200),plat:true},
+ {id:"d3",name:"Gurjot",group:"B+",lat:28.59,lng:77.19,ph:"919876500012",last:daysAgo(30),plat:true},
+ {id:"d4",name:"Neha",group:"A-",lat:28.63,lng:77.23,ph:"919990122334",last:daysAgo(150),plat:false},
+ {id:"d5",name:"Rahul",group:"O-",lat:28.55,lng:77.20,ph:"919811199887",last:daysAgo(400),plat:true},
+ {id:"d6",name:"Sana",group:"AB+",lat:28.61,lng:77.18,ph:"919899177665",last:daysAgo(95),plat:true,offWeek:true},
+ {id:"d7",name:"Vikram",group:"A+",lat:28.65,lng:77.27,ph:"919810033445",last:daysAgo(20),plat:true},
+ {id:"d8",name:"Kavya",group:"O+",lat:28.54,lng:77.24,ph:"919958011220",last:daysAgo(180),plat:true},
+ {id:"d9",name:"Arjun",group:"B-",lat:28.58,lng:77.25,ph:"919811790876",last:daysAgo(250),plat:false},
+ {id:"d10",name:"Meera",group:"A+",lat:28.60,lng:77.15,ph:"919899055443",last:daysAgo(140),plat:true},
+ {id:"d11",name:"Farhan",group:"O+",lat:28.42,lng:77.31,ph:"919811066778",last:daysAgo(140),plat:true},
+ {id:"d12",name:"Simran",group:"AB-",lat:28.66,lng:77.20,ph:"919871022311",last:daysAgo(110),plat:false}
+];
+try{var _ex=JSON.parse(localStorage.getItem("rakt_extra")||"[]");DONORS=DONORS.concat(_ex);}catch(e){}
+BANKS.forEach(function(b,i){if(b.units===undefined)b.units=(b.stock==="YES"?8+(i%5):1+(i%2));if(!b.camps)b.camps=[];});
+try{var _ss=JSON.parse(localStorage.getItem("rakt_stock")||"null");if(_ss)BANKS.forEach(function(b){if(_ss[b.n]){b.stock=_ss[b.n].stock;b.units=_ss[b.n].units;}});}catch(e){}
+try{var _sc=JSON.parse(localStorage.getItem("rakt_camps")||"null");if(_sc)BANKS.forEach(function(b){if(_sc[b.n])b.camps=_sc[b.n];});}catch(e){}
+var COMP_POOL={"Whole blood":function(){return true;},"Platelets":function(d){return d.plat!==false;},"Plasma":function(d){return ["AB+","AB-","A-","B-"].indexOf(d.group)>=0;}};
+// STATE
+var S={view:"need",ndStep:1,ndGroup:null,ndUnits:2,ndHosp:null,ndPhone:"+91 98110 12345",ndSev:"Critical <1hr",ndComp:"Whole blood",
+ emGroup:"A+",emSev:"Critical <1hr",emUnits:2,
+ group:null,units:2,hosp:null,severity:"Critical <1hr",component:"Whole blood",gender:"Male",
+ stage:"idle",tier:1,state:"idle",reqId:null,reqPhone:"+91 98110 12345",otpOk:false,wave:0,alerts:[],pending:[],accepted:[],
+ t0:0,timer:null,escTimer:null,escLadder:[],escalated:false,firstAcceptAt:null,takenOver:false,verifier:null,
+ sweep:0,sweep2:0,meDonor:"d1",quiz:{},quizFor:null,eta:{},circles:null};
+// HELPERS
+function hav(a,b,c,d){var R=6371,t=Math.PI/180,x=(c-a)*t,y=(d-b)*t,h=Math.sin(x/2)*Math.sin(x/2)+Math.cos(a*t)*Math.cos(c*t)*Math.sin(y/2)*Math.sin(y/2);return 2*R*Math.asin(Math.sqrt(h));}
 function kmTo(d){return hav(userLoc.lat,userLoc.lng,d.lat,d.lng);}
-function elig(d){return (Date.now()-new Date(d.last).getTime())/864e5>=90;}
+function gapNeed(){return GAP[S.gender]||90;}
+function elig(d){if(d.offWeek)return false;return (Date.now()-new Date(d.last).getTime())/864e5>=gapNeed();}
 function fmt(s){return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");}
-function toast(m){const e=document.createElement("div");e.className="mono text-[12px] font-extrabold px-4 py-2.5";e.style.cssText="background:#BEF264;color:#000;border:2.5px solid #000;box-shadow:4px 4px 0 #000";e.textContent="> "+m;toasts.appendChild(e);setTimeout(()=>e.remove(),2800);}
-function scrollMe(){chatMe.scrollTop=chatMe.scrollHeight;} function scrollD(){chatDonor.scrollTop=chatDonor.scrollHeight;}
-function bubbleMe(html){chatMe.insertAdjacentHTML("beforeend",`<div class="msg-in flex justify-end"><div class="bubble-me max-w-[85%] px-3.5 py-2.5 text-[13.5px] font-semibold">${html}</div></div>`);scrollMe();}
-function bubbleBot(html){chatMe.insertAdjacentHTML("beforeend",`<div class="msg-in flex gap-2"><div class="w-7 h-7 rounded-lg grid place-items-center text-sm shrink-0 bg-[#E11D48] text-white border-2 border-[#160609]">🤖</div><div class="bubble-bot max-w-[85%] px-3.5 py-2.5 text-[13.5px] font-medium">${html}</div></div>`);scrollMe();}
-async function botSay(html,delay=750){botStatus.textContent="typing…";const t=document.createElement("div");t.className="flex gap-2";t.innerHTML=`<div class="w-7 h-7 rounded-lg bg-[#E11D48] border-2 border-[#160609]"></div><div class="bubble-bot px-4 py-3 typing"><span></span> <span></span> <span></span></div>`;chatMe.appendChild(t);scrollMe();await new Promise(r=>setTimeout(r,delay));t.remove();bubbleBot(html);botStatus.textContent="online • replies instantly";}
-function quickMe(arr){quickMeBox(arr);}
-function quickMeBox(arr){const q=document.getElementById("quickMe");q.innerHTML="";arr.forEach(a=>{const b=document.createElement("button");b.className="chip mono text-[12px] font-extrabold px-3.5 py-2 rounded-full bg-white";b.textContent=a.label;b.onclick=a.fn;q.appendChild(b);});}
-function quickD(arr){const q=document.getElementById("quickDonor");q.innerHTML="";arr.forEach(a=>{const b=document.createElement("button");b.className="mono text-[11px] font-extrabold px-3 py-2 rounded-full";b.style.cssText=a.primary?"background:#25D366;color:#fff;border:2px solid #fff":"background:rgba(255,255,255,.12);color:#fff;border:2px solid rgba(255,255,255,.3)";b.textContent=a.label;b.onclick=a.fn;q.appendChild(b);});}
-function dMsg(html,me=false){chatDonor.insertAdjacentHTML("beforeend",me?`<div class="msg-in flex justify-end"><div class="max-w-[85%] px-3 py-2 text-[12.5px] font-semibold text-white" style="background:#005C4B;border-radius:12px 4px 12px 12px">${html}</div></div>`:`<div class="msg-in flex"><div class="bubble-donor max-w-[88%] px-3 py-2 text-[12.5px] font-medium">${html}<div class="mono text-[9px] text-right opacity-50">${kmOfMe()}km ✓✓</div></div></div>`);scrollD();}
-function kmOfMe(){const m=DONORS.find(d=>d.id===S.meDonor);return m?kmTo(m).toFixed(1):"?";}
-function setView(v){const onR="text-[12px] font-extrabold px-3.5 py-1.5 rounded-full bg-white text-black",off="text-[12px] font-extrabold px-3.5 py-1.5 rounded-full text-white/60";tabR.className=off;tabD.className=off;tabS.className=off+" hidden sm:block";if(v==="r"){views.className="grid gap-4 items-start";paneMe.classList.remove("hidden");paneDonor.classList.add("hidden");tabR.className=onR;}if(v==="d"){views.className="grid gap-4 items-start";paneMe.classList.add("hidden");paneDonor.classList.remove("hidden");tabD.className=onR;}if(v==="s"){views.className="grid gap-4 items-start lg:grid-cols-[1.05fr_.95fr]";paneMe.classList.remove("hidden");paneDonor.classList.remove("hidden");tabS.className=onR;}}
-function askLocation(){if(!navigator.geolocation)return;navigator.geolocation.getCurrentPosition(p=>{userLoc={lat:p.coords.latitude,lng:p.coords.longitude,label:p.coords.latitude.toFixed(2)+","+p.coords.longitude.toFixed(2)};locLabel.textContent=userLoc.label;toast("GPS LOCKED");},()=>{},{timeout:5000});}
-// BOT FLOW
-async function restart(){chatMe.innerHTML="";chatDonor.innerHTML="";quickDonor.innerHTML="";S={...S,stage:"start",group:null,units:2,hosp:null,pending:[],accepted:[],quizStep:0,eta:{},escalated:false};clearInterval(S.timer);clearTimeout(S.escTimer);clock.textContent="00:00";liveBadge.classList.add("hidden");sosBar.classList.add("hidden");meDonor.innerHTML=DONORS.map(d=>`<option value="${d.id}" ${d.id===S.meDonor?"selected":""}>${d.name} ${d.group}</option>`).join("");updateTools();await botSay(`🚨 <b>SOS mode.</b> I'm Rakt Bot. Rohan needs blood — I'll line up donors in ~60 sec.<br><span class="mono text-[11px]">28L e-RaktKosh donors • only eligible + compatible get pinged</span><div class="mono text-[11px] mt-2">EMERGENCY? Hit <b>SOS</b> (floating red) for 1-tap broadcast with severity.</div>`);quickMeBox([{label:"🚨 FIND BLOOD NOW",fn:()=>{bubbleMe("🚨 FIND BLOOD NOW");askGroup();}},{label:"⚡ 1-TAP SOS",fn:openSOS}]);dMsg(`<b>📻 Standby…</b> You are <b>${DONORS.find(d=>d.id===S.meDonor).name}</b>. Requests land here only if you're <b>compatible + eligible</b>.`);}
-async function askGroup(){S.stage="group";await botSay(`What's the <b>patient's blood group?</b> <span class="mono text-[11px]">— one tap, no confusion</span>`);quickMeBox(GROUPS.map(g=>({label:g,fn:()=>{bubbleMe(`<b>${g}</b>`);pickGroup(g);}})));}
-async function pickGroup(g){S.group=g;quickMeBox([]);await botSay(`Locked <b class="mono bg-black text-[#BEF264] px-1.5">${g}</b> — accepts <b>${COMPAT[g].join(", ")}</b>. 📍 scanning banks near <b>${userLoc.label}</b>…`,900);showBanks();}
-async function showBanks(){S.stage="banks";const sorted=[...BANKS].map(b=>({...b,km:kmTo(b)})).sort((a,b)=>a.km-b.km);S.hosp=sorted[0].n;const rows=sorted.slice(0,4).map((b,i)=>`<div class="flex items-center gap-2 border-2 border-[#160609] bg-white px-2.5 py-2 ${i===0?"":"opacity-90"}"><span class="font-extrabold text-[13px] flex-1">${i===0?"📍 ":"🏥 "}${b.n}</span><span class="mono text-[11px] font-extrabold">${b.km.toFixed(1)}km</span><span class="mono text-[10px] font-extrabold ${b.stock==="YES"?"text-green-700":"text-amber-600"}">${b.stock}</span></div>`).join("");await botSay(`<b class="mono text-[11px]">NEAREST BANKS ↓</b><div class="space-y-1.5 mt-2">${rows}</div>${sorted[0].km>20?`<div class="mt-2 bg-[#FEF3C7] border-2 border-[#160609] p-2 text-[12.5px] font-bold">⚠️ Nearest ${sorted[0].km.toFixed(0)}km — 12% districts are &gt;100km. Donors come to you.</div>`:""}`);quickMeBox([{label:"🔍 Banks far — find donors",fn:()=>{bubbleMe("Find donors near me");askUnits();}},{label:"Use nearest bank",fn:()=>{bubbleMe("Use "+S.hosp);askUnits();}}]);}
-async function askUnits(){S.stage="units";await botSay(`How many <b>units</b>?<div class="flex items-center gap-3 mt-2"><button onclick="bumpU(-1)" class="chip w-10 h-10 rounded-full bg-white text-xl font-black">−</button><span id="uVal" class="tick text-[26px] font-extrabold">2</span><button onclick="bumpU(1)" class="chip w-10 h-10 rounded-full bg-[#E11D48] text-white text-xl font-black">+</button><button onclick="confirmUnits()" class="chip mono text-[12px] font-extrabold px-4 py-2.5 rounded-full bg-[#160609] text-white ml-1">OK →</button></div><div class="mono text-[10px] mt-1 opacity-60">hospital: ${S.hosp} • tap +/− then OK</div>`);quickMeBox([]);}
-function bumpU(d){S.units=Math.min(6,Math.max(1,S.units+d));const e=document.getElementById("uVal");if(e)e.textContent=S.units;}
-async function confirmUnits(){bubbleMe(`<b>${S.units} units</b> @ ${S.hosp}`);const c=COMPAT[S.group];await botSay(`Signal ready — pinging <b>${c.join(", ")}</b> donors…<div class="mt-2 bg-[#160609] text-[#BEF264] mono text-[11.5px] font-bold p-3 rounded-xl">🩸 SOS ${S.group} — Rohan 24M — ${S.units}U ${S.group} (OK ${c.join("/")}) @ ${S.hosp} — reply YES</div>`);quickMeBox([{label:"📤 TRANSMIT NOW",fn:transmit}]);}
-async function transmit(){bubbleMe("📤 TRANSMIT NOW");return fireBroadcast(S.group,S.units,S.hosp,S.severity||"Urgent <4hr");}
-async function fireBroadcast(group,units,hosp,severity){S.group=group;S.units=units;S.hosp=hosp||S.hosp||"AIIMS";S.severity=severity;S.stage="live";const c=COMPAT[group];S.pending=DONORS.filter(d=>c.includes(d.group)&&elig(d)).map(d=>({...d,km:kmTo(d)})).sort((a,b)=>a.km-b.km).slice(0,6);S.accepted=[];S.escalated=false;const muted=DONORS.filter(d=>c.includes(d.group)&&!elig(d)).length;S.t0=Date.now();clearInterval(S.timer);clearTimeout(S.escTimer);S.timer=setInterval(()=>{const v=fmt((Date.now()-S.t0)/1000);clock.textContent=v;const e=document.getElementById("sosEta");if(e)e.textContent=v;},1000);liveBadge.classList.remove("hidden");sosBar.classList.remove("hidden");sosBarTxt.textContent=`🚨 SOS LIVE • ${group} × ${units}U • ${severity}`;actDir.href=`https://www.google.com/maps/search/${encodeURIComponent(S.hosp)}`;saveHistory("live");await botSay(`📡 <b>ON AIR [${severity}].</b> Pinged <b>${S.pending.length}</b> eligible • muted <b>${muted} recent (&lt;90d)</b>.<br><span class="mono text-[11px]">No reply in 25s → I auto-expand radius + re-ping. Donors: tap ACCEPT → ON MY WAY for ETA.</span><div class="actionbar mt-2"><a href="#" onclick="return shareSOS()">↗ SHARE SOS</a><a href="tel:108">🚑 108</a><a href="https://www.google.com/maps/search/${encodeURIComponent(S.hosp)}" target="_blank">🧭 ROUTE</a></div>`);quickMeBox([{label:"✔ Got blood — close",fn:fulfilledSOS},{label:"➕ Add note",fn:()=>bubbleBot("Note pinned — donors see: <b>please carry ID + eat iron-rich meal</b>")}]);pushToDonors();S.pending.forEach((d,i)=>setTimeout(()=>{if(S.stage==="live"&&i<3)donorAccepts(d.id,true);},2600+i*3400));S.escTimer=setTimeout(escalate,25000);if(innerWidth>=1024)setView("s");}
-async function escalate(){if(S.stage!=="live"||S.accepted.length>0||S.escalated)return;S.escalated=true;const c=COMPAT[S.group];const extra=DONORS.filter(d=>c.includes(d.group)&&elig(d)&&!S.pending.find(p=>p.id===d.id)).map(d=>({...d,km:kmTo(d)})).sort((a,b)=>a.km-b.km).slice(0,4);S.pending=S.pending.concat(extra);radarLabel.textContent=`EXPANDED +${extra.length} FAR DONORS`;bubbleBot(`⚠️ <b>No accepts in 25s — escalated.</b> Radius expanded +${extra.length} farther donors re-pinged. Severity <b>${S.severity}</b> pushed to front.`);toast(`Escalated +${extra.length} donors`);pushToDonors();extra.forEach((d,i)=>setTimeout(()=>donorAccepts(d.id,true),2000+i*3000));}
-function pushToDonors(){const me=DONORS.find(d=>d.id===S.meDonor);const ok=S.group&&COMPAT[S.group].includes(me.group)&&elig(me)&&meAvail.checked;chatDonor.innerHTML="";if(!ok){dMsg(`🔕 <b>No alert for you</b> (${!meAvail.checked?"off-duty":!elig(me)?"donated <90d — auto-muted":"your "+me.group+" ≠ "+S.group}).<br><span class="mono text-[10px]">Switch operator above to feel an alert.</span>`);quickD([]);donorStatus.textContent="standby • no alert";return;}const c=COMPAT[S.group];dMsg(`<b>🩸 RAKT SOS — ${S.group} NEEDED</b><br>Rohan 24M • ${S.units}U ${S.group} (OK ${c.join("/")})<br>📍 ${S.hosp} • ${kmOfMe()}km • reply fast`);quickD([{label:"✓ ACCEPT",primary:true,fn:()=>startQuiz(S.meDonor)},{label:"Pass",fn:()=>{dMsg("Pass — stays open.",true);quickD([]);toast("Passed");}}]);donorStatus.textContent="CH-01 • 1 INCOMING !!";}
-function donorSwitch(){S.meDonor=meDonor.value;updateTools();if(S.stage==="live")pushToDonors();else renderDonorHint();}
-function renderDonorHint(){updateTools();}
-async function startQuiz(id){S.quizFor=id;S.quizStep=0;quickD([]);dMsg("✓ ACCEPT — checking fit…",true);await new Promise(r=>setTimeout(r,700));askQuizQ();}
-const QUIZ=["Blood in last 3 months?","Fever / meds in 14 days?","Weight under 50kg?","Can reach hospital today?"];
-async function askQuizQ(){const i=S.quizStep;const last=i===3;dMsg(`<b>Q${i+1}/4:</b> ${QUIZ[i]}<br><span class="mono text-[10px]">${last?"need YES":"need NO"}</span>`);quickD([{label:last?"YES, I can go":"YES",fn:()=>answerQuiz(true)},{label:"NO",fn:()=>answerQuiz(false)}]);}
-async function answerQuiz(yes){const i=S.quizStep;dMsg(yes?"Yes":"No",true);const fail=(i<3&&yes)||(i===3&&!yes);if(fail){dMsg(`⛔ <b>Unfit today</b> — thanks for honesty. Signal stays open.`);quickD([]);toast("Donor unfit — open");return;}S.quizStep++;if(S.quizStep<4){askQuizQ();}else{quickD([]);donorAccepts(S.quizFor,false);}}
-async function donorAccepts(id,auto){const d=S.pending.find(x=>x.id===id);if(!d||S.accepted.find(x=>x.id===id))return;S.accepted.push(d);d.last=new Date().toISOString().slice(0,10);const t=fmt((Date.now()-S.t0)/1000);const eta=S.eta[id];chatMe.insertAdjacentHTML("beforeend",`<div class="msg-in burst"><div class="bubble-bot !bg-[#F0FDF4] w-full"><div class="flex items-center gap-2"><span class="w-9 h-9 grid place-items-center font-black text-white bg-green-600 border-2 border-[#160609] rounded-xl">${d.name[0]}</span><div class="flex-1"><b>${d.name} • ${d.group}</b> <span class="mono text-[10px] bg-green-600 text-white px-1.5 py-0.5">✓ ${t}</span> ${eta?`<span class="eta-chip">🚗 ${eta} MIN</span>`:""}<div class="mono text-[10px] opacity-60">${d.km.toFixed(1)}km • verified • ${d.ph}</div></div></div><div class="flex gap-1.5 mt-2"><a href="https://wa.me/${d.ph.replace(/\D/g,"")}" target="_blank" class="chip mono text-[11px] font-extrabold flex-1 text-center py-2 rounded-xl text-white" style="background:#25D366">WA</a><a href="tel:${d.ph.replace(/\s/g,"")}" class="chip mono text-[11px] font-extrabold flex-1 text-center py-2 rounded-xl bg-[#160609] text-white">CALL</a><button onclick="onWay('${d.id}')" class="chip mono text-[11px] font-extrabold flex-1 py-2 rounded-xl bg-[#BEF264]">🚗 WAY</button></div></div></div>`);scrollMe();updateTools();if(id===S.meDonor){dMsg(`🎉 <b>You accepted!</b> Patient sees your number. Reach <b>${S.hosp}</b>.`);quickD([{label:"🚗 ON MY WAY",primary:true,fn:()=>onWay(id)}]);}toast(d.name+" accepted ✓");if(S.accepted.length>=S.units){bubbleBot(`✅ <b>${S.accepted.length}/${S.units} units covered.</b> Tap ✔ GOT BLOOD to close SOS + free donors.`);}}
-function onWay(id){const mins=10+Math.floor(Math.random()*14);S.eta[id]=mins;toast("ETA "+mins+" min — needer notified");bubbleBot(`🚗 <b>${(S.pending.find(d=>d.id===id)||{}).name||"Donor"} is rolling — ETA <span class="eta-chip">${mins} MIN</span> to ${S.hosp}. <a class="underline" target="_blank" href="https://www.google.com/maps/search/${encodeURIComponent(S.hosp)}">Track route →</a>`);dMsg(`🚗 <b>You're en route — ${mins} min.</b> Carry ID. Needer + family can track you.`,id===S.meDonor);if(id===S.meDonor)quickD([]);renderDonorHint();}
-function shareSOS(){const txt=`🩸 SOS ${S.group} × ${S.units}U @ ${S.hosp} (${S.severity}) — ${userLoc.label} — call ${"+91 98110 12345"}`;if(navigator.share){navigator.share({title:"Blood SOS",text:txt}).catch(()=>{});}else if(navigator.clipboard){navigator.clipboard.writeText(txt).then(()=>toast("SOS copied — paste to family/WA"));}else{toast("Copy: "+txt);}return false;}
-function cancelSOS(){S.stage="start";clearInterval(S.timer);clearTimeout(S.escTimer);sosBar.classList.add("hidden");liveBadge.classList.add("hidden");saveHistory("cancelled");bubbleBot("🛑 SOS ended by you. Donors stood down. History saved.");toast("SOS cancelled");}
-function fulfilledSOS(){S.stage="done";clearInterval(S.timer);clearTimeout(S.escTimer);sosBar.classList.add("hidden");liveBadge.classList.add("hidden");saveHistory("fulfilled");bubbleBot(`🎉 <b>Marked fulfilled in ${fmt((Date.now()-S.t0)/1000)}.</b> Donors earned Hero badges. Refer 1 friend → keep chain alive. <button onclick="copyReferral()" class="underline font-extrabold">Copy invite</button>`);quickMeBox([{label:"↺ New SOS",fn:restart}]);toast("✔ Closed — thank donors!");}
-function saveHistory(st){try{const h=JSON.parse(localStorage.getItem("rakt_hist")||"[]");h.unshift({g:S.group,u:S.units,h:S.hosp,s:S.severity,st,t:new Date().toLocaleString()});localStorage.setItem("rakt_hist",JSON.stringify(h.slice(0,8)));}catch(e){}}
-function showHistory(){try{const h=JSON.parse(localStorage.getItem("rakt_hist")||"[]");if(!h.length){toast("No SOS yet — hit SOS");return;}bubbleBot(`<b class="mono text-[11px]">PAST SOS ↓</b>`+h.map(x=>`<div class="mono text-[11px] border-2 border-[#160609] bg-white px-2 py-1.5 mt-1">🩸 ${x.g} × ${x.u} @ ${x.h} — ${x.s} — <b>${x.st.toUpperCase()}</b><br><span class="opacity-60">${x.t}</span></div>`).join(""));}catch(e){}}
-function openSOS(){sosModal.classList.remove("hidden");renderSOSGroups();}
-function closeSOS(){sosModal.classList.add("hidden");}
-function pickSev(b){S.severity=b.dataset.s;document.querySelectorAll("#sevRow .sev").forEach(x=>x.classList.remove("on"));b.classList.add("on");}
-function sosBump(d){S.sosUnits=Math.min(6,Math.max(1,S.sosUnits+d));sosUnitsV.textContent=S.sosUnits;}
-function renderSOSGroups(){sosGroups.innerHTML=GROUPS.map(g=>`<button onclick="S.sosGroup='${g}';renderSOSGroups()" class="chip mono text-[12px] font-extrabold py-2 rounded-xl ${S.sosGroup===g?"text-white":"bg-white"}" ${S.sosGroup===g?'style="background:#E11D48"':""}>${g}</button>`).join("");}
-async function fireSOS(){closeSOS();bubbleMe(`🚨 <b>SOS ${S.sosGroup} × ${S.sosUnits}U [${S.severity}]</b>`);S.units=S.sosUnits;const sorted=[...BANKS].map(b=>({...b,km:kmTo(b)})).sort((a,b)=>a.km-b.km);S.hosp=sorted[0].n;await botSay(`⚡ <b>Emergency mode.</b> Skipping small talk — broadcasting <b>${S.sosGroup}</b> now…`);return fireBroadcast(S.sosGroup,S.sosUnits,S.hosp,S.severity);}
-function openCompat(){compatModal.classList.remove("hidden");compatTable.innerHTML=Object.keys(COMPAT).map(k=>`<div class="flex justify-between border-b border-dashed pb-1"><span class="font-extrabold">Patient ${k}</span><span class="text-green-700">← ${COMPAT[k].join(", ")}</span></div>`).join("");}
-function closeCompat(){compatModal.classList.add("hidden");}
-function copyReferral(){const l="rakt.co/r/SAN24";if(navigator.clipboard)navigator.clipboard.writeText(l).then(()=>toast("Invite copied: "+l));else toast("Invite: "+l);}
-function updateTools(){const me=DONORS.find(d=>d.id===S.meDonor);if(!me||!toolElig)return;const days=Math.max(0,Math.ceil(90-(Date.now()-new Date(me.last).getTime())/864e5));toolElig.textContent=days===0?"✅ TODAY":"in "+days+"d ("+me.last+")";const n=S.accepted.filter(a=>a.id===me.id).length;toolBadge.textContent=n>0?"🏆 Lifesaver ×"+(n+1):(elig(me)?"💚 Ready":"⏳ Resting");}
-function sendFree(){const v=inMe.value.trim();if(!v)return;inMe.value="";const up=v.toUpperCase().replace(/\s/g,"");const found=GROUPS.find(g=>up.includes(g));bubbleMe(v);if(S.stage==="start"){askGroup();}else if(S.stage==="group"&&found){pickGroup(found);}else if(found){pickGroup(found);}else{bubbleBot(`Noted — tap a chip below to keep the demo moving 👇`);}}
-function renderDonorHintWrap(){}
-// radar
-(function(){const cv=document.getElementById("radar");if(!cv)return;const ctx=cv.getContext("2d");function size(){const r=cv.parentElement.getBoundingClientRect();cv.width=r.width*devicePixelRatio;cv.height=r.height*devicePixelRatio;ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);}size();addEventListener("resize",size);function hA(id){let h=0;for(const c of id)h=(h*31+c.charCodeAt(0))%360;return h*Math.PI/180;}function draw(){const W=cv.parentElement.getBoundingClientRect().width,H=cv.parentElement.getBoundingClientRect().height,cx=W/2,cy=H/2,R=Math.min(W,H)/2-8;ctx.clearRect(0,0,W,H);ctx.fillStyle="#FFFDF7";ctx.fillRect(0,0,W,H);for(let i=4;i>0;i--){ctx.beginPath();ctx.arc(cx,cy,R*i/4,0,7);ctx.strokeStyle="#160609";ctx.lineWidth=i===4?2:1;ctx.setLineDash(i===4?[]:[4,4]);ctx.stroke();ctx.setLineDash([]);}S.sweep+=0.035;ctx.save();ctx.translate(cx,cy);ctx.rotate(S.sweep);const gr=ctx.createLinearGradient(0,0,R,0);gr.addColorStop(0,"rgba(225,29,72,0)");gr.addColorStop(1,"rgba(225,29,72,.5)");ctx.fillStyle=gr;ctx.beginPath();ctx.moveTo(0,0);ctx.arc(0,0,R,-.45,0);ctx.fill();ctx.strokeStyle="#E11D48";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(R,0);ctx.stroke();ctx.restore();const all=[...DONORS.map(d=>({...d,kind:elig(d)?"ok":"mute"})),...BANKS.map(b=>({...b,id:b.n,kind:"bank"}))];radarCount.textContent=all.length+" SIGNALS";all.forEach(p=>{const a=hA(p.id||p.n);const dist=p.km!=null?p.km:kmTo(p);const rr=Math.min(R-6,8+Math.log10(dist+1.2)*R*.4);const x=cx+Math.cos(a)*rr,y=cy+Math.sin(a)*rr;let diff=(S.sweep-a)%(Math.PI*2);if(diff<0)diff+=Math.PI*2;const glow=diff<.7?(1-diff/.7):0;ctx.beginPath();ctx.arc(x,y,(p.kind==="bank"?5:4)+glow*3,0,7);ctx.fillStyle=p.kind==="bank"?"#E11D48":p.kind==="ok"?"#16a34a":"#9ca3af";ctx.fill();ctx.lineWidth=2;ctx.strokeStyle="#160609";ctx.stroke();if(glow>.4){ctx.beginPath();ctx.arc(x,y,9+glow*7,0,7);ctx.strokeStyle=`rgba(225,29,72,${glow})`;ctx.stroke();}});ctx.fillStyle="#160609";ctx.beginPath();ctx.arc(cx,cy,6,0,7);ctx.fill();ctx.fillStyle="#BEF264";ctx.beginPath();ctx.arc(cx,cy,2.8,0,7);ctx.fill();requestAnimationFrame(draw);}draw();})();
-meDonor.innerHTML=DONORS.map(d=>`<option value="${d.id}">${d.name} ${d.group}</option>`).join("");
-renderSOSGroups();updateTools();
-setView(innerWidth>=1024?"s":"r");
-restart();askLocation();
+function toast(m){var box=document.getElementById("toasts");var el=document.createElement("div");el.className="mono text-[13px] font-extrabold px-4 py-3 pop";el.style.cssText="background:#3D0A16;color:#FFEDED;border:1px solid #E7C66B;border-radius:16px;box-shadow:0 16px 40px -12px rgba(0,0,0,.5)";el.textContent="> "+m;box.appendChild(el);setTimeout(function(){el.style.opacity="0";el.style.transition="all .3s";setTimeout(function(){el.remove();},300);},3000);}
+function lsGet(k){try{return JSON.parse(localStorage.getItem(k)||"null");}catch(e){return null;}}
+function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+function maskPh(ph){var d=String(ph||"").replace(/\D/g,"");return d.length>4?("••••• XX"+d.slice(-3)):"•••••";}
+function tierTag(){return S.tier===3?("Verified by "+(S.verifier||"Hospital")):TIER_TAG[S.tier];}
+function sortedBanks(){return BANKS.map(function(b){return {n:b.n,km:kmTo(b),stock:b.stock,ph:b.ph};}).sort(function(a,b){return a.km-b.km;});}
+// NAV
+var VIEWS=["need","donate","em","team","hosp","circle","bank"];
+var TABMAP={need:"tabNeed",donate:"tabDonate",em:"tabEm"};
+function nav(v){
+ S.view=v;
+ VIEWS.forEach(function(x){
+  var p=document.getElementById(x==="need"?"viewNeed":x==="donate"?"viewDonate":x==="em"?"viewEm":x==="team"?"viewTeam":x==="hosp"?"viewHosp":x==="circle"?"viewCircle":"viewBank");
+  if(p)p.classList.toggle("hidden",x!==v);
+ });
+ var side=document.getElementById("needSide");if(side){side.classList.toggle("hidden",v!=="need");side.classList.toggle("flex",v==="need");}
+ var dside=document.getElementById("donateSide");if(dside){dside.classList.toggle("hidden",v!=="donate");dside.classList.toggle("flex",v==="donate");}
+ ["tabNeed","tabDonate","tabEm"].forEach(function(id){var e=document.getElementById(id);if(e)e.className="text-[13px] font-extrabold px-4 py-2.5 rounded-full text-white/60";});
+ if(TABMAP[v])document.getElementById(TABMAP[v]).className="text-[13px] font-extrabold px-4 py-2.5 rounded-full bg-white text-black";
+ try{document.getElementById("landing").classList.add("hidden");}catch(e){}
+ if(v==="team")renderCoord();if(v==="hosp")renderHosp();if(v==="circle")renderCircles();if(v==="bank")renderBank();if(v==="donate")renderDonate();
+ window.scrollTo(0,0);
+}
+function chooseRole(r){
+ if(r==="staff"){nav("team");return;}
+ if(r==="em"){nav("em");return;}
+ nav(r);
+}
+function goLanding(){try{document.getElementById("landing").classList.remove("hidden");}catch(e){}}
+function askLocation(){if(!navigator.geolocation)return;navigator.geolocation.getCurrentPosition(function(p){userLoc={lat:p.coords.latitude,lng:p.coords.longitude,label:p.coords.latitude.toFixed(2)+","+p.coords.longitude.toFixed(2)};document.getElementById("locLabel").textContent=userLoc.label;renderNdHosp();emRenderHosp();toast("Location set");},function(){},{timeout:6000});}
+// NEED WIZARD
+var ND_STEPS=["Blood","Details","Send","Live"];
+function ndShow(n){
+ S.ndStep=n;
+ ["ndS1","ndS2","ndS3","ndS4"].forEach(function(id,i){document.getElementById(id).classList.toggle("hidden",(i+1)!==n);});
+ document.getElementById("ndSteps").innerHTML=ND_STEPS.map(function(s,i){
+  var k=i+1,cls=(k===n)?"cur":(k<n?"done":"");
+  return '<span class="stepdot '+cls+'"><span class="n">'+(k<n?"✓":k)+'</span>'+s+'</span>'+(k<4?'<span style="color:#E5C9C1">→</span>':"");
+ }).join("");
+ if(n===2)renderNdHosp();
+ if(n===3)renderReview();
+ window.scrollTo(0,0);
+}
+function ndRenderGroups(){
+ document.getElementById("ndGroups").innerHTML=GROUPS.map(function(g){
+  return '<button onclick="ndPickGroup(\''+g+'\')" class="bigpick '+(S.ndGroup===g?"on":"")+'">'+g+'</button>';
+ }).join("");
+ var h=document.getElementById("ndGroupHint");
+ h.innerHTML=S.ndGroup?("Patient <b>"+S.ndGroup+"</b> can receive from <b style='color:#15803d'>"+COMPAT[S.ndGroup].join(", ")+"</b>"):"Tip: AB+ accepts all • O− gives to all";
+}
+function ndPickGroup(g){S.ndGroup=g;ndRenderGroups();setTimeout(function(){ndShow(2);},200);}
+function renderNdHosp(){
+ var sb=sortedBanks();
+ document.getElementById("ndHosp").innerHTML=sb.map(function(b){return "<option"+(b.n===S.ndHosp?" selected":"")+">"+b.n+" ("+b.km.toFixed(1)+"km • "+b.stock+")</option>";}).join("");
+ if(!S.ndHosp)S.ndHosp=sb[0].n;
+}
+function ndBump(d){S.ndUnits=Math.min(6,Math.max(1,S.ndUnits+d));document.getElementById("ndUnitsV").textContent=S.ndUnits;}
+function ndPickSev(b){S.ndSev=b.getAttribute("data-s");Array.prototype.forEach.call(document.querySelectorAll("#ndSevRow .sev"),function(x){x.classList.remove("on");});b.classList.add("on");}
+function ndPickComp(b){S.ndComp=b.getAttribute("data-c");Array.prototype.forEach.call(document.querySelectorAll("#ndCompRow .sev"),function(x){x.classList.remove("on");});b.classList.add("on");}
+function renderReview(){
+ var c=COMPAT[S.ndGroup]||[];
+ document.getElementById("ndReview").innerHTML=
+  '<div class="flex items-center gap-3"><div class="w-12 h-12 rounded-2xl grid place-items-center text-2xl text-white" style="background:linear-gradient(150deg,#C8102E,#7A0F24)">🩸</div>'+
+  '<div><div class="font-extrabold text-[18px]">'+S.ndGroup+' × '+S.ndUnits+' bags</div><div class="mono text-[12px] font-bold" style="color:#7A5A5E">'+document.getElementById("ndHosp").value.split(" (")[0]+' • '+S.ndSev+' • '+S.ndComp+'</div></div></div>'+
+  '<div class="flex flex-wrap gap-1.5 mt-3"><span class="mono text-[11px] font-extrabold" style="color:#A08A8D">ALSO OK:</span>'+c.map(function(x){return '<span class="tag tag-green">'+x+'</span>';}).join("")+'</div>'+
+  '<div class="mono text-[12px] font-bold mt-2" style="color:#7A5A5E">📞 '+document.getElementById("ndPhone").value+'</div>';
+}
+function ndSend(){
+ if(!S.ndGroup){toast("Pick a blood group first");ndShow(1);return;}
+ S.group=S.ndGroup;S.units=S.ndUnits;S.hosp=document.getElementById("ndHosp").value.split(" (")[0];
+ S.severity=S.ndSev;S.component=S.ndComp;S.reqPhone=document.getElementById("ndPhone").value||S.reqPhone;
+ var btn=document.getElementById("ndSendBtn");btn.disabled=true;btn.textContent="Verifying phone… ✓";
+ setTimeout(function(){btn.disabled=false;btn.innerHTML="📤 SEND TO DONORS";fireBroadcast(S.group,S.units,S.hosp,S.severity);},900);
+}
+// EMERGENCY (express: same engine, auto hospital, stays on live via need screen)
+function emRenderAll(){
+ document.getElementById("emGroups").innerHTML=GROUPS.map(function(g){
+  var on=(g===S.emGroup);
+  return '<button onclick="emPickGroup(\''+g+'\')" class="bigpick '+(on?"on":"")+'">'+g+'</button>';
+ }).join("");
+ var sb=sortedBanks();
+ document.getElementById("emHosp").textContent="@ "+sb[0].n+" ("+sb[0].km.toFixed(1)+"km)";
+}
+function emPickGroup(g){S.emGroup=g;emRenderAll();}
+function emPickSev(b){S.emSev=b.getAttribute("data-s");Array.prototype.forEach.call(document.querySelectorAll("#emSevRow .sev"),function(x){x.classList.remove("on");});b.classList.add("on");}
+function emBump(d){S.emUnits=Math.min(6,Math.max(1,S.emUnits+d));document.getElementById("emUnitsV").textContent=S.emUnits;}
+function emBroadcast(){
+ var sb=sortedBanks();
+ fireBroadcast(S.emGroup,S.emUnits,sb[0].n,S.emSev);
+ toast("🚨 Emergency alert sent — watch the live tracker!");
+}
+// BROADCAST ENGINE (tiers, waves, guards, escalation ladder)
+function blockedList(){return lsGet("rakt_block")||[];}
+function isBlocked(ph){return blockedList().indexOf(ph)>=0;}
+function blockPhone(ph){var b=blockedList();if(b.indexOf(ph)<0){b.push(ph);lsSet("rakt_block",b);}}
+function pingCount(id){var m=lsGet("rakt_ping")||{};return m[new Date().getFullYear()+id]||0;}
+function bumpPing(id){var m=lsGet("rakt_ping")||{};var k=new Date().getFullYear()+id;m[k]=(m[k]||0)+1;lsSet("rakt_ping",m);}
+function checkRate(){
+ var d=new Date().toDateString(),m=lsGet("rakt_rate")||{},k1="ph"+d,k2="hosp"+d;
+ if((m[k1]||0)>=3){toast("⛔ Limit: 3 requests per phone per day");return false;}
+ if((m[k2]||0)>=5){toast("⛔ Limit: 5 requests per hospital per day");return false;}
+ m[k1]=(m[k1]||0)+1;m[k2]=(m[k2]||0)+1;lsSet("rakt_rate",m);return true;
+}
+function compOK(c){return COMP_POOL[S.component||"Whole blood"];}
+function eligiblePool(){
+ var c=COMPAT[S.group]||[],f=compOK();
+ return DONORS.filter(function(d){return c.indexOf(d.group)>=0&&elig(d)&&f(d);}).map(function(d){var n={};for(var k in d)n[k]=d[k];n.km=kmTo(d);return n;}).sort(function(a,b){return a.km-b.km;});
+}
+function fireBroadcast(group,units,hosp,severity){
+ if(isBlocked(S.reqPhone)){toast("⛔ This number is blocked (fake report before)");return;}
+ if(!checkRate())return;
+ S.group=group;S.units=units;S.hosp=hosp;S.severity=severity;
+ S.reqId="RQ"+Date.now().toString(36).toUpperCase();
+ S.tier=(window.__hospVerified&&window.__hospVerified===hosp)?3:1;
+ S.state="waves";S.stage="live";S.wave=1;S.alerts=[];S.accepted=[];S.escalated=false;S.eta={};S.firstAcceptAt=null;S.takenOver=false;
+ var code=String(Math.floor(1000+Math.random()*9000));S.otpCode=code;S.otpOk=true;
+ toast("Phone verified ✓ (mock OTP "+code+")");
+ var pool=eligiblePool();
+ var cap=TIER_CAP[S.tier]||4;
+ S.pending=pool.slice(0,cap);
+ var muted=DONORS.filter(function(d){return (COMPAT[group]||[]).indexOf(d.group)>=0&&!elig(d);}).length;
+ S.t0=Date.now();clearInterval(S.timer);clearTimeout(S.escTimer);
+ S.timer=setInterval(function(){var v=fmt(Math.floor((Date.now()-S.t0)/1000));document.getElementById("clock").textContent=v;document.getElementById("liveTimer").textContent=v;},1000);
+ document.getElementById("liveBadge").classList.remove("hidden");
+ document.getElementById("liveTitle").textContent=group+" × "+units+" bags • "+hosp;
+ document.getElementById("liveSub").textContent=severity+" • "+S.component+" • "+tierTag();
+ document.getElementById("liveRoute").href="https://www.google.com/maps/search/"+encodeURIComponent(hosp);
+ saveHistory("live");
+ logWave(1);
+ renderLive();pushDonate();
+ S.pending.slice(0,2).forEach(function(d,i){setTimeout(function(){if(S.stage==="live")donorAccepts(d.id,true);},3500+i*4500);});
+ clearTimeout(S.escTimer);S.escTimer=setTimeout(escalate25,25000);
+ clearLadder();S.escLadder.push(setTimeout(bankAlert,60000));S.escLadder.push(setTimeout(coordPing,120000));
+ try{radarLabel("W1 • T"+S.tier+" • "+S.component.toUpperCase());}catch(e){}
+ renderCoord();renderHosp();renderBank();
+ if(S.view!=="need")nav("need");
+ ndShow(4);
+}
+function logWave(w){
+ S.wave=w;
+ var cap=TIER_CAP[S.tier]||4;
+ S.alerts=eligiblePool().slice(0,cap).map(function(d){return {req:S.reqId,donor:d.id,wave:w,sent:new Date().toLocaleTimeString(),resp:"none"};});
+ S.alerts.forEach(function(a){bumpPing(a.donor);});
+ renderAlertLog();
+}
+function clearLadder(){(S.escLadder||[]).forEach(clearTimeout);S.escLadder=[];}
+function escalate25(){
+ if(S.stage!=="live"||S.accepted.length>0||S.escalated)return;
+ if((S.tier||1)===1){
+  S.escalated=true;
+  liveNote("⏳ No replies yet — Tier 1 is capped. A coordinator must confirm the hospital before asking more donors.");
+  toast("Tier 1 capped — needs coordinator");nav("team");return;
+ }
+ S.escalated=true;
+ var extra=eligiblePool().filter(function(d){return !S.pending.find(function(p){return p.id===d.id;});}).slice(0,4);
+ S.pending=S.pending.concat(extra);S.wave++;
+ extra.forEach(function(d){S.alerts.push({req:S.reqId,donor:d.id,wave:S.wave,sent:new Date().toLocaleTimeString(),resp:"none"});bumpPing(d.id);});
+ renderAlertLog();
+ liveNote("⚠️ No replies — asked +"+extra.length+" more donors farther away.");
+ toast("Asking +"+extra.length+" more donors");renderLive();pushDonate();
+ extra.slice(0,2).forEach(function(d,i){setTimeout(function(){donorAccepts(d.id,true);},2000+i*3000);});
+}
+function bankAlert(){
+ if(S.stage!=="live"||S.accepted.length>0)return;
+ liveNote("🏦 Escalation 2/3 — nearest blood banks alerted to reserve stock.");
+ toast("Banks alerted (2/3)");try{radarLabel("BANK ALERT SENT");}catch(e){}renderBank();
+}
+function coordPing(){
+ if(S.stage!=="live"||S.accepted.length>0)return;
+ S.takenOver=true;S.state="takeover";
+ liveNote("👤 Escalation 3/3 — coordinator paged. See Team desk.");
+ toast("Coordinator paged (3/3)");renderCoord();
+}
+function liveNote(html){
+ var feed=document.getElementById("acceptFeed");if(!feed)return;
+ var d=document.createElement("div");
+ d.className="rounded-2xl p-3 text-[14px] font-bold pop";d.style.cssText="background:#FFF7F4;border:1px dashed #E7C9C1";
+ d.innerHTML=html;feed.appendChild(d);
+}
+// LIVE RENDER
+function renderLive(){
+ document.getElementById("liveSummary").innerHTML="Notified <b>"+S.pending.length+" nearby donors</b> • skipped <b>"+DONORS.filter(function(d){return (COMPAT[S.group]||[]).indexOf(d.group)>=0&&!elig(d);}).length+" recent</b> • accepts <b style='color:#15803d'>"+(COMPAT[S.group]||[]).join(", ")+"</b> • <b>"+tierTag()+"</b>";
+ var feed=document.getElementById("acceptFeed");
+ var notes=feed?Array.prototype.filter.call(feed.children,function(c){return c.getAttribute("data-note")==="1";}):[];
+ feed.innerHTML="";
+ notes.forEach(function(n){feed.appendChild(n);});
+ S.accepted.forEach(function(a){feed.appendChild(acceptCard(a));});
+ if(S.accepted.length>=S.units&&S.units>0){
+  var d=document.createElement("div");d.className="rounded-2xl p-3 text-[14px] font-extrabold pop";d.style.cssText="background:#DCFCE7;border:1px solid rgba(34,197,94,.4)";
+  d.innerHTML="✅ "+S.accepted.length+"/"+S.units+" bags covered. Tap ✔ Done to close + thank donors.";feed.appendChild(d);
+ }
+}
+function acceptCard(d){
+ var el=document.createElement("div");
+ el.className="rounded-2xl p-3.5 pop";el.style.cssText="background:linear-gradient(135deg,rgba(34,197,94,.12),rgba(255,255,255,.02));border:1px solid rgba(34,197,94,.4)";
+ var eta=S.eta[d.id]?(' <span class="tag tag-gold">🚗 '+S.eta[d.id]+' MIN</span>'):"";
+ el.innerHTML='<div class="flex items-center gap-3"><div class="w-11 h-11 rounded-2xl grid place-items-center font-extrabold text-white text-[16px]" style="background:linear-gradient(135deg,#22c55e,#15803d)">'+d.name[0]+'</div>'+
+ '<div class="flex-1 min-w-0"><div class="font-extrabold text-[14px]">'+d.name+' <span class="tag tag-red">'+d.group+'</span>'+eta+'</div>'+
+ '<div class="mono text-[11px]" style="color:#7A5A5E">'+d.km.toFixed(1)+'km • verified • '+d.ph+'</div></div><div class="font-extrabold" style="color:#16a34a">✓</div></div>'+
+ '<div class="grid grid-cols-4 gap-1.5 mt-2.5"><a href="https://wa.me/'+d.ph.replace(/\D/g,"")+'" target="_blank" class="btn !min-h-[46px] !text-[12px] text-white" style="background:#25D366;border:none">WA</a>'+
+ '<a href="tel:'+d.ph.replace(/\s/g,"")+'" class="btn btn-dark !min-h-[46px] !text-[12px]">Call</a>'+
+ '<button onclick="onWay(\''+d.id+'\')" class="btn btn-gold !min-h-[46px] !text-[12px]">🚗 Way</button>'+
+ '<button onclick="shareDonor()" class="btn !min-h-[46px] !text-[12px]">Share</button></div>';
+ return el;
+}
+function onWay(id){
+ var mins=10+Math.floor(Math.random()*14);S.eta[id]=mins;
+ toast("ETA "+mins+" min — needer notified");renderLive();
+}
+function shareSOS(){
+ var txt="🩸 SOS "+S.group+" × "+S.units+" bags @ "+S.hosp+" ("+S.severity+") — "+userLoc.label;
+ if(navigator.share){navigator.share({title:"Blood SOS",text:txt}).catch(function(){});}
+ else if(navigator.clipboard){navigator.clipboard.writeText(txt).then(function(){toast("SOS copied — paste anywhere");});}
+ else toast(txt);
+ return false;
+}
+function shareDonor(){toast("Shared with family ✓");return false;}
+function cancelSOS(){
+ S.stage="start";clearInterval(S.timer);clearTimeout(S.escTimer);clearLadder();
+ document.getElementById("liveBadge").classList.add("hidden");
+ saveHistory("cancelled");toast("Request ended");ndShow(1);
+}
+function fulfilledSOS(){
+ S.stage="done";clearInterval(S.timer);clearTimeout(S.escTimer);clearLadder();
+ document.getElementById("liveBadge").classList.add("hidden");
+ saveHistory("fulfilled");
+ var names=S.accepted.map(function(d){return d.name;}).join(", ")||"donors";
+ document.getElementById("certNames").textContent=names;
+ document.getElementById("certMeta").textContent=(S.reqId||"RQ")+" • "+(S.group||"")+" × "+(S.units||"")+" • "+new Date().toLocaleDateString();
+ document.getElementById("certModal").classList.remove("hidden");
+ S.accepted.forEach(function(d){
+  var gap=GAP[S.gender]||90,dt=new Date();dt.setDate(dt.getDate()+gap);
+  var all=lsGet("rakt_remind")||{};all[d.id]=dt.toISOString().slice(0,10);lsSet("rakt_remind",all);
+ });
+ toast("✔ Closed — thank donors!");
+ try{
+  var feed=document.getElementById("acceptFeed");
+  var d=document.createElement("div");d.className="rounded-2xl p-3 text-[14px] font-extrabold pop";d.style.cssText="background:#DCFCE7;border:1px solid rgba(34,197,94,.4)";
+  d.innerHTML='🎉 Done! Thank you, '+names+'. <button onclick="copyReferral()" class="underline">Invite a friend →</button>';feed.appendChild(d);
+ }catch(e){}
+}
+function saveHistory(st){try{var h=lsGet("rakt_hist")||[];h.unshift({g:S.group,u:S.units,h:S.hosp,s:S.severity,st:st,t:new Date().toLocaleString()});lsSet("rakt_hist",h.slice(0,8));}catch(e){}}
+// DONOR SIDE
+function donorSwitch(){var v=document.getElementById("meDonor").value;S.meDonor=v;updateTools();renderDonate();}
+function setGender(g){S.gender=g;Array.prototype.forEach.call(document.querySelectorAll("#genderRow .sev"),function(x){x.classList.toggle("on",x.getAttribute("data-g")===g);});updateTools();renderDonate();}
+function wkChange(){var me=DONORS.find(function(d){return d.id===S.meDonor;});if(me)me.offWeek=!document.getElementById("wkToggle").checked;toast(document.getElementById("wkToggle").checked?"Reachable this week ✓":"Paused — no pings");renderDonate();}
+function meNow(){return DONORS.find(function(d){return d.id===S.meDonor;});}
+function canSee(){
+ var me=meNow();if(!me||!S.group||S.stage!=="live")return {ok:false};
+ if(!document.getElementById("meAvail").checked)return {ok:false,why:"you are off duty"};
+ if(me.offWeek)return {ok:false,why:"you paused this week"};
+ if(!elig(me))return {ok:false,why:"you donated recently — resting "+gapNeed()+" days"};
+ if((COMPAT[S.group]||[]).indexOf(me.group)<0)return {ok:false,why:"your "+me.group+" doesn't match "+S.group};
+ return {ok:true};
+}
+function renderDonate(){
+ var me=meNow(),box=document.getElementById("donorReq"),quiz=document.getElementById("donorQuiz");
+ quiz.innerHTML="";
+ var days=Math.max(0,Math.ceil(gapNeed()-(Date.now()-new Date(me.last).getTime())/864e5));
+ document.getElementById("meMeta").innerHTML="<b>"+me.group+"</b> • last donated "+me.last+" • "+(elig(me)?"<b style='color:#15803d'>✓ can donate</b>":"<b style='color:#B91C1C'>resting</b>");
+ var gate=canSee();
+ if(!gate.ok){
+  box.innerHTML='<div class="rounded-2xl p-5 text-center font-semibold" style="background:#FFF7F4;border:1px dashed #E7C9C1;color:#A08A8D">💤 '+(S.stage==="live"?("No alert for you — "+gate.why+"."):"No requests right now.")+'<br><span class="text-[13px]">Send one from Need Blood to see it land here.</span></div>';
+  return;
+ }
+ var tag=tierTag();
+ box.innerHTML='<div class="rounded-2xl p-4 pop" style="background:linear-gradient(135deg,rgba(200,16,46,.08),rgba(255,255,255,.02));border:1px solid #E7C9C1">'+
+ '<div class="tag '+(S.tier===3?"tag-gold":S.tier===2?"tag-green":"tag-grey")+'">'+tag+'</div>'+
+ '<div class="font-extrabold text-[18px] mt-2">🩸 '+S.group+' blood needed</div>'+
+ '<div class="mono text-[13px] font-bold" style="color:#7A5A5E">'+S.units+' bags • '+S.hosp+' • '+kmTo(me).toFixed(1)+'km away</div>'+
+ '<div class="mono text-[11px] mt-1" style="color:#A08A8D">Your number is shared only if you accept.</div>'+
+ '<div class="grid grid-cols-2 gap-2 mt-3"><button onclick="startQuiz()" class="btn btn-green">✓ I CAN DONATE</button>'+
+ '<button onclick="decline()" class="btn">Can\'t now</button></div>'+
+ '<button onclick="reportReq()" class="w-full mt-2 py-2 text-[12px] font-bold" style="color:#B79A9C">⚑ Report this request</button></div>';
+}
+var QUIZ=["Donated blood in the last 3 months?","Fever, cold or antibiotics in the last 14 days?","Weight below 50kg?","Can you reach the hospital today?"];
+function startQuiz(){S.quiz={};S.quizFor=S.meDonor;renderQuiz();}
+function renderQuiz(){
+ var q=document.getElementById("donorQuiz"),box=document.getElementById("donorReq");
+ box.innerHTML='<div class="rounded-2xl p-4 font-extrabold" style="background:#FFF7F4;border:1px solid #F0DCD4">Quick health check (20 sec) — answer honestly 🩺</div>';
+ q.innerHTML=QUIZ.map(function(t,i){
+  var v=S.quiz[i],need=(i===3);
+  return '<div class="rounded-2xl p-3 mt-2" style="background:#fff;border:1px solid #EDD9D3"><div class="font-bold text-[14px]">'+(i+1)+'. '+t+'</div>'+
+  '<div class="flex gap-2 mt-2"><button onclick="answerQuiz('+i+',false)" class="quizbtn '+(v===false?"no-on":"")+'">NO</button>'+
+  '<button onclick="answerQuiz('+i+',true)" class="quizbtn '+(v===true?"yes-on":"")+'">'+(need?"YES, I can go":"YES")+'</button></div></div>';
+ }).join("")+'<button onclick="submitQuiz()" class="btn btn-dark mt-3">Confirm ✓</button>';
+}
+function answerQuiz(i,v){S.quiz[i]=v;renderQuiz();}
+function submitQuiz(){
+ var bad=(S.quiz[0]||S.quiz[1]||S.quiz[2]||!S.quiz[3])||(S.quiz[0]===undefined);
+ if(S.quiz[0]===undefined||S.quiz[1]===undefined||S.quiz[2]===undefined||S.quiz[3]===undefined){toast("Answer all 4 first");return;}
+ if(bad){document.getElementById("donorQuiz").innerHTML='<div class="rounded-2xl p-4 font-bold pop" style="background:#FEF3C7;border:1px solid #E7C66B">⛔ Not this time — thanks for checking honestly. The request stays open for others.</div>';toast("Unfit today — stays open");return;}
+ donorAccepts(S.quizFor,false);
+}
+function decline(){
+ var a=S.alerts.find(function(x){return x.donor===S.meDonor;});if(a)a.resp="declined";
+ renderAlertLog();toast("Logged — thanks anyway");
+ document.getElementById("donorReq").innerHTML='<div class="rounded-2xl p-4 text-center font-bold" style="background:#FFF7F4;border:1px dashed #E7C9C1">Noted ✓ The request stays open for others.</div>';
+ document.getElementById("donorQuiz").innerHTML="";
+}
+function reportReq(){
+ liveNote("⚠️ A donor reported this request — flagged for the team.");
+ toast("Reported — team will review");nav("team");
+}
+function donorAccepts(id,auto){
+ var d=S.pending.find(function(x){return x.id===id;});if(!d||S.accepted.find(function(x){return x.id===id;}))return;
+ S.accepted.push(d);d.last=new Date().toISOString().slice(0,10);
+ if(!S.firstAcceptAt&&S.t0)S.firstAcceptAt=Date.now();
+ var a=S.alerts.find(function(x){return x.donor===id;});if(a)a.resp="accepted";
+ toast(d.name+" accepted ✓");renderLive();renderDonate();renderAlertLog();renderCoord();updateTools();
+ try{if(!document.getElementById("viewBank").classList.contains("hidden"))renderBank();}catch(e){}
+ if(id===S.meDonor){
+  document.getElementById("donorQuiz").innerHTML="";
+  document.getElementById("donorReq").innerHTML='<div class="rounded-2xl p-4 pop" style="background:#DCFCE7;border:1px solid rgba(34,197,94,.4)"><div class="font-extrabold text-[16px]">🎉 You accepted! Reach <b>'+S.hosp+'</b>.</div><div class="mono text-[12px] font-bold mt-1" style="color:#15803d">Carry ID • Patient side has your number now</div><button onclick="onWay(\''+id+'\')" class="btn btn-dark mt-3">🚗 I AM ON MY WAY</button></div>';
+ }
+}
+function registerDonor(){
+ var n=document.getElementById("dName").value||"New Hero",g=document.getElementById("dGroup").value,p=document.getElementById("dPhone").value||"+91 98XXX XXXXX";
+ var d={id:"d"+Date.now(),name:n,group:g,lat:userLoc.lat,lng:userLoc.lng,ph:p,last:daysAgo(200),plat:true};
+ DONORS.push(d);
+ try{var ex=lsGet("rakt_extra")||[];ex.push(d);lsSet("rakt_extra",ex);}catch(e){}
+ refreshDonorOptions();document.getElementById("meDonor").value=d.id;S.meDonor=d.id;updateTools();renderDonate();toast("Welcome, "+n+"!");
+}
+function refreshDonorOptions(){
+ document.getElementById("meDonor").innerHTML=DONORS.map(function(d){return "<option value='"+d.id+"'"+(d.id===S.meDonor?" selected":"")+">"+d.name+" • "+d.group+"</option>";}).join("");
+}
+function updateTools(){
+ var me=meNow();if(!me||!document.getElementById("toolElig"))return;
+ var gap=gapNeed(),days=Math.max(0,Math.ceil(gap-(Date.now()-new Date(me.last).getTime())/864e5));
+ document.getElementById("toolElig").textContent=days===0?"✅ TODAY":"in "+days+"d";
+ var n=S.accepted.filter(function(a){return a.id===me.id;}).length;
+ document.getElementById("toolBadge").textContent=n>0?("🏆 Lifesaver ×"+(n+1)):(elig(me)?"💚 Ready":"⏳ Resting");
+}
+function pushDonate(){renderDonate();}
+// COORD
+function renderAlertLog(){
+ var el=document.getElementById("alertLog");if(!el)return;
+ el.innerHTML=S.alerts.length?S.alerts.map(function(a){var d=DONORS.find(function(x){return x.id===a.donor;});return "<div>• "+(a.req||"RQ")+" → "+(d?d.name:a.donor)+" ("+(d?d.group:"")+") • W"+a.wave+" • "+a.sent+" • <b>"+a.resp.toUpperCase()+"</b> • pings:"+pingCount(a.donor)+"</div>";}).join(""):"<div style='opacity:.5'>no alerts yet</div>";
+}
+function renderCoord(){
+ var el=document.getElementById("coordList");if(!el)return;
+ var elapsed=S.t0?Math.floor((Date.now()-S.t0)/1000)+"s":"—";
+ el.innerHTML=S.reqId?'<div class="rounded-2xl p-3" style="background:#FFFBEB;border:1px solid #E7C66B"><div class="font-extrabold text-[15px]">🩸 '+S.group+' × '+S.units+' '+S.component+' @ '+S.hosp+'</div><div class="mono text-[11px] font-bold" style="color:#7A5A5E">'+S.reqId+' • Tier '+S.tier+' ('+tierTag()+') • '+S.state+' • '+elapsed+' • wave '+S.wave+' • accepts '+S.accepted.length+'</div><div class="mono text-[11px] font-bold" style="color:#7A5A5E">Requester: '+maskPh(S.reqPhone)+' (masked • OTP '+(S.otpOk?"verified":"pending")+')</div><div class="flex gap-2 mt-2 flex-wrap"><button onclick="coordConfirm(true)" class="btn btn-gold !min-h-[48px] !text-[12px]" style="width:auto;flex:1">☎ CONFIRMED</button><button onclick="coordConfirm(false)" class="btn !min-h-[48px] !text-[12px]" style="width:auto;flex:1">✘ FAKE</button></div></div>':'<div class="mono text-[12px] font-bold" style="color:#A08A8D">No open request. Fire one to see it here.</div>';
+ document.getElementById("coordBanks").innerHTML=BANKS.slice(0,5).map(function(b){return "• "+b.n+" — <a class='underline' href='tel:"+b.ph+"'>"+b.ph+"</a> ("+b.stock+", "+b.units+"U)";}).join("<br>");
+ renderAlertLog();
+ var h=lsGet("rakt_hist")||[];
+ document.getElementById("coordHist").innerHTML=h.length?h.map(function(x){return "<div>🩸 "+x.g+" × "+x.u+" @ "+x.h+" — <b>"+String(x.st).toUpperCase()+"</b> <span style='opacity:.6'>"+x.t+"</span></div>";}).join(""):"<div style='opacity:.5'>none yet</div>";
+}
+function coordWiden(){
+ if(S.stage!=="live"){toast("No live request");return;}
+ if(S.tier===1){toast("Tier 1 capped — confirm the hospital first");nav("team");return;}
+ var pool=eligiblePool().slice(0,Math.min(12,S.pending.length+4));
+ var fresh=pool.filter(function(d){return !S.pending.find(function(p){return p.id===d.id;});});
+ S.pending=pool;S.wave++;
+ fresh.forEach(function(d){S.alerts.push({req:S.reqId,donor:d.id,wave:S.wave,sent:new Date().toLocaleTimeString(),resp:"none"});bumpPing(d.id);});
+ renderAlertLog();toast("Wave "+S.wave+" → "+S.pending.length+" donors");renderLive();pushDonate();
+ fresh.slice(0,2).forEach(function(d,i){setTimeout(function(){donorAccepts(d.id,true);},2000+i*3000);});
+}
+function coordConfirm(ok){
+ if(!S.reqId){toast("No request");return;}
+ if(ok){S.tier=Math.max(S.tier,2);toast("Confirmed → Tier 2 (Checked)");coordWiden();}
+ else coordCancel("fake — hospital denies");
+ renderCoord();
+}
+function coordCancel(reason){
+ S.state="cancelled";S.stage="done";clearInterval(S.timer);clearTimeout(S.escTimer);clearLadder();
+ blockPhone(S.reqPhone);
+ document.getElementById("liveBadge").classList.add("hidden");
+ saveHistory("cancelled-fake");toast("Cancelled — number blocked");
+ S.accepted.forEach(function(d){toast("Notified "+d.name+": cancelled");});
+ renderCoord();
+}
+function coordTakeover(){
+ if(!S.reqId){toast("No live request");return;}
+ S.takenOver=true;S.state="takeover";toast("Coordinator took over ✓");renderCoord();
+}
+// HOSPITAL
+function renderHosp(){
+ var el=document.getElementById("hospList");if(!el)return;
+ el.innerHTML=S.reqId?'<div class="rounded-2xl p-3" style="background:#F0FDF4;border:1px solid rgba(34,197,94,.4)"><div class="font-extrabold">🩸 '+S.group+' × '+S.units+' @ '+S.hosp+'</div><div class="mono text-[11px]">Tier '+S.tier+' • '+tierTag()+'</div></div>':'<div class="mono text-[12px]" style="color:#A08A8D">No request yet.</div>';
+}
+function hospVerify(){
+ var h=document.getElementById("hospName").value||"AIIMS";
+ window.__hospVerified=h;
+ if(S.reqId&&S.stage==="live"){S.tier=3;S.verifier=h;toast("Verified by "+h+" → Tier 3");coordWiden();}
+ else toast("Armed: next SOS at "+h+" starts Tier 3");
+ renderHosp();
+}
+// CIRCLES
+function getCircles(){
+ if(!S.circles){S.circles=[
+  {id:"c1",patient:"Aarav (B+)",group:"B+",hosp:"AIIMS Day Care",intervalDays:28,nextDue:daysAgo(-9),members:["d1","d8","d10"],asked:{}},
+  {id:"c2",patient:"Zara (O-)",group:"O-",hosp:"LNJP Day Care",intervalDays:21,nextDue:daysAgo(-3),members:["d5","d4"],asked:{}}
+ ];}
+ return S.circles;
+}
+function renderCircles(){
+ var el=document.getElementById("circleBody");if(!el)return;
+ el.innerHTML=getCircles().map(function(c){
+  var mem=c.members.map(function(id){
+   var d=DONORS.find(function(x){return x.id===id;});if(!d)return "";
+   return "<div class='flex items-center gap-2 rounded-xl px-2.5 py-2 bg-white text-[13px]' style='border:1px solid #EDD9D3'><b>"+d.name+" "+d.group+"</b><span class='mono text-[10px]'>"+(elig(d)?"✅ fit":"⛔ paused")+(d.offWeek?" • off-week":"")+"</span><span class='mono text-[10px] ml-auto' style='color:#A08A8D'>asked: "+(c.asked[id]||"never")+"</span></div>";
+  }).join("");
+  return "<div class='rounded-2xl p-3 bg-white' style='border:1px solid #EDD9D3'><div class='font-extrabold'>⭕ "+c.patient+" — every "+c.intervalDays+" days @ "+c.hosp+"</div><div class='mono text-[11px] font-bold' style='color:#7A5A5E'>next due "+c.nextDue+"</div><div class='space-y-1.5 mt-2'>"+mem+"</div><button onclick=\"circleSend('"+c.id+"')\" class='btn btn-green mt-2 !min-h-[52px] !text-[14px]'>SEND SCHEDULED REQUEST</button></div>";
+ }).join("");
+}
+function circleSend(cid){
+ var c=getCircles().find(function(x){return x.id===cid;});if(!c)return;
+ var mem=c.members.map(function(id){return DONORS.find(function(d){return d.id===id;});}).filter(function(d){return d&&elig(d)&&!d.offWeek;});
+ mem.sort(function(a,b){return String(c.asked[a.id]||"")<String(c.asked[b.id]||"")?-1:1;});
+ var today=new Date().toISOString().slice(0,10);
+ mem.slice(0,2).forEach(function(d){c.asked[d.id]=today;});
+ if(mem.length)toast("Circle pinged ("+mem.length+" fit)");
+ else toast("Circle can't cover it — use emergency flow");
+ renderCircles();
+}
+// BANK ADMIN
+function renderBank(){
+ var el=document.getElementById("bankBody");if(!el)return;
+ var elapsed=S.t0?Math.floor((Date.now()-S.t0)/1000)+"s":"—";
+ var first=S.firstAcceptAt?Math.floor((S.firstAcceptAt-S.t0)/1000)+"s":"—";
+ var open=S.reqId?("<div class='rounded-2xl p-3 mb-2' style='background:#FFF7F4;border:1px solid #F0DCD4'><div class='font-extrabold'>🩸 "+(S.group||"?")+" × "+(S.units||"?")+" "+(S.component||"")+" @ "+(S.hosp||"?")+"</div><div class='mono text-[11px]'>state "+(S.state||S.stage)+" • tier "+(S.tier||1)+" • elapsed "+elapsed+" • first accept "+first+" • accepts "+(S.accepted||[]).length+"</div></div>"):"<div class='mono text-[12px]' style='color:#A08A8D'>No open request.</div>";
+ var stock=BANKS.map(function(b){
+  return "<div class='flex items-center gap-2 rounded-xl px-2 py-1.5 bg-white mb-1.5 text-[13px]' style='border:1px solid #EDD9D3'><b class='flex-1'>"+b.n+"</b><select onchange=\"bankStock('"+b.n+"',this.value)\" class='mono text-[11px] font-extrabold border border-[#E7C9C1] rounded-lg px-1 py-1'><option"+(b.stock==="YES"?" selected":"")+">YES</option><option"+(b.stock==="LOW"?" selected":"")+">LOW</option></select><input type='number' min='0' value='"+b.units+"' onchange=\"bankUnits('"+b.n+"',this.value)\" class='mono text-[11px] font-bold border border-[#E7C9C1] rounded-lg w-14 px-1 py-1'/> <span class='mono text-[10px]'>U</span></div>";
+ }).join("");
+ var camps=BANKS.map(function(b){
+  return "<div class='rounded-xl p-2 mb-1.5 bg-white' style='border:1px dashed #E7C9C1'><b class='text-[13px]'>"+b.n+"</b><div class='mono text-[10px]'>"+(b.camps.length?b.camps.map(function(x){return "⛺ "+x.d+" @ "+x.p;}).join("<br>"):"no camps")+"</div><div class='flex gap-1 mt-1'><input id='campD_"+b.n+"' placeholder='2026-11-02' class='mono text-[10px] border border-[#E7C9C1] rounded-lg px-1 py-1 w-24'/><input id='campP_"+b.n+"' placeholder='place' class='mono text-[10px] border border-[#E7C9C1] rounded-lg px-1 py-1 flex-1'/><button onclick=\"bankCamp('"+b.n+"')\" class='btn btn-gold !min-h-[36px] !text-[11px]' style='width:auto'>+CAMP</button></div></div>";
+ }).join("");
+ el.innerHTML="<div class='mono text-[10px] font-extrabold' style='color:#A08A8D'>OPEN REQUEST + RESPONSE TIMES</div>"+open+"<div class='mono text-[10px] font-extrabold mt-2' style='color:#A08A8D'>STOCK</div><div class='mt-1'>"+stock+"</div><div class='mono text-[10px] font-extrabold mt-2' style='color:#A08A8D'>CAMPS</div><div class='mt-1'>"+camps+"</div>";
+}
+function bankStock(n,v){var b=BANKS.find(function(x){return x.n===n;});if(b){b.stock=v;persistStock();toast(n+" → "+v);}}
+function bankUnits(n,v){var b=BANKS.find(function(x){return x.n===n;});if(b){b.units=Math.max(0,parseInt(v)||0);persistStock();}}
+function bankCamp(n){var d=(document.getElementById("campD_"+n)||{}).value||"2026-11-02",p=(document.getElementById("campP_"+n)||{}).value||"Camp site",b=BANKS.find(function(x){return x.n===n;});if(b){b.camps.push({d:d,p:p});persistCamps();renderBank();toast("Camp added @ "+n);}}
+function persistStock(){var o={};BANKS.forEach(function(b){o[b.n]={stock:b.stock,units:b.units};});lsSet("rakt_stock",o);}
+function persistCamps(){var o={};BANKS.forEach(function(b){o[b.n]=b.camps;});lsSet("rakt_camps",o);}
+// MISC
+function openCompat(){document.getElementById("compatTable").innerHTML=Object.keys(COMPAT).map(function(k){return "<div class='flex justify-between border-b border-dashed pb-1'><span class='font-extrabold'>Patient "+k+"</span><span style='color:#15803d'>← "+COMPAT[k].join(", ")+"</span></div>";}).join("");document.getElementById("compatModal").classList.remove("hidden");}
+function closeCompat(){document.getElementById("compatModal").classList.add("hidden");}
+function copyReferral(){var l="rakt.co/r/SAN24";if(navigator.clipboard)navigator.clipboard.writeText(l).then(function(){toast("Invite copied: "+l);});else toast("Invite: "+l);}
+// RADAR
+function initRadar(cvId,countId,labelId,getSweep){
+ var cv=document.getElementById(cvId);if(!cv)return null;var ctx=cv.getContext("2d");
+ function size(){var r=cv.parentElement.getBoundingClientRect();var d=Math.min(devicePixelRatio||1,2);cv.width=r.width*d;cv.height=r.height*d;ctx.setTransform(d,0,0,d,0,0);}
+ size();addEventListener("resize",size);
+ function hA(id){var h=0;for(var i=0;i<id.length;i++)h=(h*31+id.charCodeAt(i))%360;return h*Math.PI/180;}
+ var st={sweep:0};
+ function draw(){
+  var r=cv.parentElement.getBoundingClientRect(),W=r.width,H=r.height,cx=W/2,cy=H/2,R=Math.min(W,H)/2-8;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle="#FFFDF7";ctx.fillRect(0,0,W,H);
+  var i;for(i=4;i>0;i--){ctx.beginPath();ctx.arc(cx,cy,R*i/4,0,7);ctx.strokeStyle="#7A0F24";ctx.lineWidth=i===4?2:1;ctx.setLineDash(i===4?[]:[4,4]);ctx.stroke();ctx.setLineDash([]);}
+  st.sweep+=0.035;S.sweep=st.sweep;
+  ctx.save();ctx.translate(cx,cy);ctx.rotate(st.sweep);
+  var gr=ctx.createLinearGradient(0,0,R,0);gr.addColorStop(0,"rgba(200,16,46,0)");gr.addColorStop(1,"rgba(200,16,46,.5)");
+  ctx.fillStyle=gr;ctx.beginPath();ctx.moveTo(0,0);ctx.arc(0,0,R,-.45,0);ctx.fill();
+  ctx.strokeStyle="#C8102E";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(R,0);ctx.stroke();ctx.restore();
+  var all=DONORS.map(function(d){return {id:d.id,group:d.group,km:kmTo(d),kind:elig(d)?"ok":"mute"};}).concat(BANKS.map(function(b){return {id:b.n,group:"H",km:kmTo(b),kind:"bank"};}));
+  try{document.getElementById(countId).textContent=all.length+" SIGNALS";}catch(e){}
+  all.forEach(function(p){
+   var a=hA(p.id),dist=p.km,rr=Math.min(R-6,8+Math.log10(dist+1.2)*R*.4);
+   var x=cx+Math.cos(a)*rr,y=cy+Math.sin(a)*rr,diff=(st.sweep-a)%(Math.PI*2);if(diff<0)diff+=Math.PI*2;
+   var glow=diff<.7?(1-diff/.7):0;
+   ctx.beginPath();ctx.arc(x,y,(p.kind==="bank"?5:4)+glow*3,0,7);
+   ctx.fillStyle=p.kind==="bank"?"#C8102E":p.kind==="ok"?"#16a34a":"#9ca3af";
+   ctx.fill();ctx.lineWidth=2;ctx.strokeStyle="#3D0A16";ctx.stroke();
+   if(glow>.4){ctx.beginPath();ctx.arc(x,y,9+glow*7,0,7);ctx.strokeStyle="rgba(200,16,46,"+glow.toFixed(2)+")";ctx.stroke();}
+  });
+  ctx.fillStyle="#3D0A16";ctx.beginPath();ctx.arc(cx,cy,6,0,7);ctx.fill();
+  ctx.fillStyle="#E7C66B";ctx.beginPath();ctx.arc(cx,cy,2.8,0,7);ctx.fill();
+  requestAnimationFrame(draw);
+ }
+ draw();return st;
+}
+function radarLabel(t){try{document.getElementById("radarLabel").textContent=t;document.getElementById("radarLabel2").textContent=t;}catch(e){}}
+// INIT
+refreshDonorOptions();ndRenderGroups();ndShow(1);emRenderAll();updateTools();renderCoord();renderHosp();
+initRadar("radar","radarCount","radarLabel");initRadar("radar2","radarCount2","radarLabel2");
+if(navigator.geolocation)navigator.geolocation.getCurrentPosition(function(p){userLoc={lat:p.coords.latitude,lng:p.coords.longitude,label:p.coords.latitude.toFixed(2)+","+p.coords.longitude.toFixed(2)};document.getElementById("locLabel").textContent=userLoc.label;renderNdHosp();emRenderAll();toast("Location set");},function(){},{timeout:5000});
+</script>
+<script>
+// BLOOD AMBIENT: floating blood cells + gold motes drifting upward, calm + premium.
+(function(){
+if(window.__blood)return;window.__blood=true;
+try{
+var c=document.getElementById("bloodFloat");if(!c)return;var x=c.getContext("2d");
+var W,H,ps=[];var RM=false;
+try{RM=matchMedia("(prefers-reduced-motion: reduce)").matches;}catch(e){}
+function rs(){var d=Math.min(devicePixelRatio||1,2);c.width=innerWidth*d;c.height=innerHeight*d;x.setTransform(d,0,0,d,0,0);W=innerWidth;H=innerHeight;}
+rs();addEventListener("resize",rs);
+for(var i=0;i<26;i++)ps.push({x:Math.random(),y:Math.random(),r:4+Math.random()*11,s:.00012+Math.random()*.00045,o:.05+Math.random()*.10,ph:Math.random()*6.28,gold:Math.random()<.22});
+function cell(p,px,py){x.beginPath();x.arc(px,py,p.r,0,6.29);x.fillStyle=p.gold?("rgba(201,162,39,"+p.o+")"):("rgba(163,22,46,"+p.o+")");x.fill();x.beginPath();x.arc(px-p.r*.3,py-p.r*.3,Math.max(1,p.r*.28),0,6.29);x.fillStyle="rgba(255,255,255,"+(p.o+.12)+")";x.fill();}
+(function loop(t){x.clearRect(0,0,W,H);for(var k=0;k<ps.length;k++){var p=ps[k];if(!RM)p.y-=p.s;if(p.y<-.06){p.y=1.06;p.x=Math.random();}var px=p.x*W+Math.sin(t/2400+p.ph)*14,py=p.y*H+Math.cos(t/3100+p.ph)*10;cell(p,px,py);}if(!RM)requestAnimationFrame(loop);})(0);
+}catch(e){}
+})();
 </script>
 </body>
 </html>
