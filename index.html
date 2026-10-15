@@ -167,7 +167,7 @@ main,.sticky{position:relative;z-index:1}
 <div id="ndS3" class="ndstep hidden">
 <h2 class="display font-bold text-[26px] mt-4">Check and send</h2>
 <div id="ndReview" class="mt-3 rounded-2xl p-4" style="background:#FFF7F4;border:1px solid #F0DCD4"></div>
-<div id="ndOtp" class="mono text-[12px] font-bold mt-2" style="color:#A08A8D">Phone verifies automatically on send (mock OTP).</div>
+<div id="ndOtp" class="mono text-[12px] font-bold mt-2" style="color:#A08A8D">We verify your phone with a 4-digit code on send (mock OTP).</div>
 <div class="flex gap-2 mt-4">
 <button onclick="ndShow(2)" class="btn" style="width:auto;padding-left:22px;padding-right:22px">←</button>
 <button onclick="ndSend()" id="ndSendBtn" class="btn btn-red" style="flex:1">📤 SEND TO DONORS</button>
@@ -177,7 +177,7 @@ main,.sticky{position:relative;z-index:1}
 <div class="rounded-2xl p-4 mt-4 text-white flex items-center gap-3" style="background:linear-gradient(150deg,#1F2937,#0F172A)">
 <div class="w-11 h-11 rounded-2xl grid place-items-center text-xl shrink-0" style="background:linear-gradient(180deg,#FB4D6D,#9F1239)">🩸</div>
 <div class="flex-1 min-w-0"><div class="font-extrabold text-[15px]" id="liveTitle">Broadcasting…</div><div class="text-[12px] text-white/60" id="liveSub"></div></div>
-<div class="text-right"><div class="tick text-[20px] font-bold" id="liveTimer">00:00</div><div class="text-[10px] font-extrabold" style="color:#4ADE80">● LIVE</div></div>
+<div class="text-right"><div class="tick text-[20px] font-bold" id="liveTimer">00:00</div><div class="mono text-[10px] font-bold" id="liveDeadline" style="color:#E7C66B">—</div><div class="text-[10px] font-extrabold" style="color:#4ADE80">● LIVE</div></div>
 </div>
 <div id="liveSummary" class="text-[14px] font-semibold rounded-2xl p-3 mt-3" style="background:#FFF7F4;border:1px solid #F0DCD4"></div>
 <div class="text-[11px] font-extrabold tracking-widest mt-4 mb-2" style="color:#B79A9C">DONORS SAYING YES ↓</div>
@@ -236,8 +236,12 @@ main,.sticky{position:relative;z-index:1}
 <input id="dName" placeholder="Your name" class="field"/>
 <select id="dGroup" class="field font-extrabold"><option>O+</option><option>O-</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option></select>
 <input id="dPhone" placeholder="Phone" class="field col-span-2"/>
+<input id="dAge" type="number" placeholder="Age (18–65)" class="field"/>
+<input id="dWeight" type="number" placeholder="Weight kg (45+)" class="field"/>
 </div>
-<button onclick="registerDonor()" class="btn btn-green mt-2">Join 28L+ lifesavers →</button></details>
+<label class="flex items-start gap-2 mt-2 text-[13px] font-bold cursor-pointer" style="color:#7A5A5E"><input id="dConsent" type="checkbox" class="w-5 h-5 mt-0.5" style="accent-color:#15803d"/> I agree to be contacted on WhatsApp for donation requests, max a few per year.</label>
+<button onclick="registerDonor()" class="btn btn-green mt-2">Verify phone + Join →</button>
+<button onclick="optOutToggle()" id="optBtn" class="w-full mt-2 py-2.5 text-[13px] font-bold rounded-2xl" style="color:#B79A9C">Stop all alerts (opt out)</button></details>
 </section>
 
 <!-- DONOR RADAR (right column, donate view) -->
@@ -396,7 +400,7 @@ var S={view:"need",ndStep:1,ndGroup:null,ndUnits:2,ndHosp:null,ndPhone:"+91 9811
 function hav(a,b,c,d){var R=6371,t=Math.PI/180,x=(c-a)*t,y=(d-b)*t,h=Math.sin(x/2)*Math.sin(x/2)+Math.cos(a*t)*Math.cos(c*t)*Math.sin(y/2)*Math.sin(y/2);return 2*R*Math.asin(Math.sqrt(h));}
 function kmTo(d){return hav(userLoc.lat,userLoc.lng,d.lat,d.lng);}
 function gapNeed(){return GAP[S.gender]||90;}
-function elig(d){if(d.offWeek)return false;return (Date.now()-new Date(d.last).getTime())/864e5>=gapNeed();}
+function elig(d){if(d.offWeek||d.optedOut)return false;return (Date.now()-new Date(d.last).getTime())/864e5>=gapNeed();}
 function fmt(s){return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");}
 function toast(m){var box=document.getElementById("toasts");var el=document.createElement("div");el.className="mono text-[13px] font-extrabold px-4 py-3 pop";el.style.cssText="background:#3D0A16;color:#FFEDED;border:1px solid #E7C66B;border-radius:16px;box-shadow:0 16px 40px -12px rgba(0,0,0,.5)";el.textContent="> "+m;box.appendChild(el);setTimeout(function(){el.style.opacity="0";el.style.transition="all .3s";setTimeout(function(){el.remove();},300);},3000);}
 function lsGet(k){try{return JSON.parse(localStorage.getItem(k)||"null");}catch(e){return null;}}
@@ -469,8 +473,15 @@ function ndSend(){
  if(!S.ndGroup){toast("Pick a blood group first");ndShow(1);return;}
  S.group=S.ndGroup;S.units=S.ndUnits;S.hosp=document.getElementById("ndHosp").value.split(" (")[0];
  S.severity=S.ndSev;S.component=S.ndComp;S.reqPhone=document.getElementById("ndPhone").value||S.reqPhone;
- var btn=document.getElementById("ndSendBtn");btn.disabled=true;btn.textContent="Verifying phone… ✓";
- setTimeout(function(){btn.disabled=false;btn.innerHTML="📤 SEND TO DONORS";fireBroadcast(S.group,S.units,S.hosp,S.severity);},900);
+ if(S.otpOk&&S._otpPh===S.reqPhone){fireBroadcast(S.group,S.units,S.hosp,S.severity);return;}
+ var code=String(Math.floor(1000+Math.random()*9000));S.otpCode=code;S.otpOk=false;
+ document.getElementById("ndOtp").innerHTML="📲 OTP sent to <b>"+S.reqPhone+"</b> (mock SMS: <b class='tick'>"+code+"</b>)<div class='flex gap-2 mt-2'><input id='otpIn' inputmode='numeric' placeholder='4-digit code' class='field !min-h-[52px]'/><button onclick='verifyNdOtp()' class='btn btn-dark !min-h-[52px]' style='width:auto'>Verify ✓</button></div>";
+ toast("OTP sent (mock): "+code);
+}
+function verifyNdOtp(){
+ var v=(document.getElementById("otpIn")||{}).value||"";
+ if(v===String(S.otpCode)){S.otpOk=true;S._otpPh=S.reqPhone;toast("✓ Phone verified");fireBroadcast(S.group,S.units,S.hosp,S.severity);}
+ else toast("Wrong code — try again");
 }
 // EMERGENCY (express: same engine, auto hospital, stays on live via need screen)
 function emRenderAll(){
@@ -486,6 +497,7 @@ function emPickSev(b){S.emSev=b.getAttribute("data-s");Array.prototype.forEach.c
 function emBump(d){S.emUnits=Math.min(6,Math.max(1,S.emUnits+d));document.getElementById("emUnitsV").textContent=S.emUnits;}
 function emBroadcast(){
  var sb=sortedBanks();
+ S.otpOk=true;S._otpPh=S.reqPhone;
  fireBroadcast(S.emGroup,S.emUnits,sb[0].n,S.emSev);
  toast("🚨 Emergency alert sent — watch the live tracker!");
 }
@@ -513,14 +525,13 @@ function fireBroadcast(group,units,hosp,severity){
  S.reqId="RQ"+Date.now().toString(36).toUpperCase();
  S.tier=(window.__hospVerified&&window.__hospVerified===hosp)?3:1;
  S.state="waves";S.stage="live";S.wave=1;S.alerts=[];S.accepted=[];S.escalated=false;S.eta={};S.firstAcceptAt=null;S.takenOver=false;
- var code=String(Math.floor(1000+Math.random()*9000));S.otpCode=code;S.otpOk=true;
- toast("Phone verified ✓ (mock OTP "+code+")");
+ S.deadline=Date.now()+({Critical:60,Urgent:240}[ (severity||"").split(" ")[0] ]||1440)*60000;
  var pool=eligiblePool();
  var cap=TIER_CAP[S.tier]||4;
  S.pending=pool.slice(0,cap);
  var muted=DONORS.filter(function(d){return (COMPAT[group]||[]).indexOf(d.group)>=0&&!elig(d);}).length;
  S.t0=Date.now();clearInterval(S.timer);clearTimeout(S.escTimer);
- S.timer=setInterval(function(){var v=fmt(Math.floor((Date.now()-S.t0)/1000));document.getElementById("clock").textContent=v;document.getElementById("liveTimer").textContent=v;},1000);
+ S.timer=setInterval(tickLive,1000);
  document.getElementById("liveBadge").classList.remove("hidden");
  document.getElementById("liveTitle").textContent=group+" × "+units+" bags • "+hosp;
  document.getElementById("liveSub").textContent=severity+" • "+S.component+" • "+tierTag();
@@ -571,6 +582,26 @@ function coordPing(){
  liveNote("👤 Escalation 3/3 — coordinator paged. See Team desk.");
  toast("Coordinator paged (3/3)");renderCoord();
 }
+function tickLive(){
+ var v=fmt(Math.floor((Date.now()-S.t0)/1000));
+ try{document.getElementById("clock").textContent=v;document.getElementById("liveTimer").textContent=v;}catch(e){}
+ var dl=null;try{dl=document.getElementById("liveDeadline");}catch(e){}
+ if(S.deadline&&dl){
+  var left=S.deadline-Date.now();
+  dl.textContent=left>0?("⏳ "+Math.floor(left/60000)+"m "+Math.floor(left%60000/1000)+"s left"):"⏳ time up";
+  if(left<=0&&S.stage==="live")expireRequest();
+ }
+}
+function expireRequest(){
+ if(S.accepted.length>0)return;
+ S.state="expired";S.stage="done";clearInterval(S.timer);clearTimeout(S.escTimer);clearLadder();
+ try{document.getElementById("liveBadge").classList.add("hidden");}catch(e){}
+ saveHistory("expired");
+ toast("⏳ No donor in time — moved to coordinator");
+ liveNote("⏳ <b>Deadline passed with no accepts — request expired</b> and moved to the top of the Team desk.");
+ try{nav("team");}catch(e){}
+ renderCoord();
+}
 function liveNote(html){
  var feed=document.getElementById("acceptFeed");if(!feed)return;
  var d=document.createElement("div");
@@ -579,7 +610,7 @@ function liveNote(html){
 }
 // LIVE RENDER
 function renderLive(){
- document.getElementById("liveSummary").innerHTML="Notified <b>"+S.pending.length+" nearby donors</b> • skipped <b>"+DONORS.filter(function(d){return (COMPAT[S.group]||[]).indexOf(d.group)>=0&&!elig(d);}).length+" recent</b> • accepts <b style='color:#15803d'>"+(COMPAT[S.group]||[]).join(", ")+"</b> • <b>"+tierTag()+"</b>";
+ document.getElementById("liveSummary").innerHTML="Wave <b>"+S.wave+"</b> • Notified <b>"+S.pending.length+" nearby donors</b> • skipped <b>"+DONORS.filter(function(d){return (COMPAT[S.group]||[]).indexOf(d.group)>=0&&!elig(d);}).length+" recent</b> • accepts <b style='color:#15803d'>"+(COMPAT[S.group]||[]).join(", ")+"</b> • <b>"+tierTag()+"</b> • ⏳ "+({Critical:"60 min",Urgent:"4 hrs"}[String(S.severity||"").split(" ")[0]]||"24 hrs")+" deadline";
  var feed=document.getElementById("acceptFeed");
  var notes=feed?Array.prototype.filter.call(feed.children,function(c){return c.getAttribute("data-note")==="1";}):[];
  feed.innerHTML="";
@@ -618,11 +649,13 @@ function shareDonor(){toast("Shared with family ✓");return false;}
 function cancelSOS(){
  S.stage="start";clearInterval(S.timer);clearTimeout(S.escTimer);clearLadder();
  document.getElementById("liveBadge").classList.add("hidden");
+ try{document.getElementById("liveDeadline").textContent="—";}catch(e){}
  saveHistory("cancelled");toast("Request ended");ndShow(1);
 }
 function fulfilledSOS(){
  S.stage="done";clearInterval(S.timer);clearTimeout(S.escTimer);clearLadder();
  document.getElementById("liveBadge").classList.add("hidden");
+ try{document.getElementById("liveDeadline").textContent="done ✓";}catch(e){}
  saveHistory("fulfilled");
  var names=S.accepted.map(function(d){return d.name;}).join(", ")||"donors";
  document.getElementById("certNames").textContent=names;
@@ -641,12 +674,13 @@ function fulfilledSOS(){
 }
 function saveHistory(st){try{var h=lsGet("rakt_hist")||[];h.unshift({g:S.group,u:S.units,h:S.hosp,s:S.severity,st:st,t:new Date().toLocaleString()});lsSet("rakt_hist",h.slice(0,8));}catch(e){}}
 // DONOR SIDE
-function donorSwitch(){var v=document.getElementById("meDonor").value;S.meDonor=v;updateTools();renderDonate();}
+function donorSwitch(){var v=document.getElementById("meDonor").value;S.meDonor=v;var me=meNow();try{document.getElementById("optBtn").textContent=(me&&me.optedOut)?"Opt back in (resume alerts)":"Stop all alerts (opt out)";}catch(e){}updateTools();renderDonate();}
 function setGender(g){S.gender=g;Array.prototype.forEach.call(document.querySelectorAll("#genderRow .sev"),function(x){x.classList.toggle("on",x.getAttribute("data-g")===g);});updateTools();renderDonate();}
 function wkChange(){var me=DONORS.find(function(d){return d.id===S.meDonor;});if(me)me.offWeek=!document.getElementById("wkToggle").checked;toast(document.getElementById("wkToggle").checked?"Reachable this week ✓":"Paused — no pings");renderDonate();}
 function meNow(){return DONORS.find(function(d){return d.id===S.meDonor;});}
 function canSee(){
  var me=meNow();if(!me||!S.group||S.stage!=="live")return {ok:false};
+ if(me.optedOut)return {ok:false,why:"you opted out — tap 'Opt back in' below"};
  if(!document.getElementById("meAvail").checked)return {ok:false,why:"you are off duty"};
  if(me.offWeek)return {ok:false,why:"you paused this week"};
  if(!elig(me))return {ok:false,why:"you donated recently — resting "+gapNeed()+" days"};
@@ -668,7 +702,7 @@ function renderDonate(){
  '<div class="tag '+(S.tier===3?"tag-gold":S.tier===2?"tag-green":"tag-grey")+'">'+tag+'</div>'+
  '<div class="font-extrabold text-[18px] mt-2">🩸 '+S.group+' blood needed</div>'+
  '<div class="mono text-[13px] font-bold" style="color:#7A5A5E">'+S.units+' bags • '+S.hosp+' • '+kmTo(me).toFixed(1)+'km away</div>'+
- '<div class="mono text-[11px] mt-1" style="color:#A08A8D">Your number is shared only if you accept.</div>'+
+ '<div class="mono text-[11px] mt-1" style="color:#A08A8D">Your number is shared only if you accept. Reply STOP anytime to opt out.</div>'+
  '<div class="grid grid-cols-2 gap-2 mt-3"><button onclick="startQuiz()" class="btn btn-green">✓ I CAN DONATE</button>'+
  '<button onclick="decline()" class="btn">Can\'t now</button></div>'+
  '<button onclick="reportReq()" class="w-full mt-2 py-2 text-[12px] font-bold" style="color:#B79A9C">⚑ Report this request</button></div>';
@@ -716,10 +750,23 @@ function donorAccepts(id,auto){
 }
 function registerDonor(){
  var n=document.getElementById("dName").value||"New Hero",g=document.getElementById("dGroup").value,p=document.getElementById("dPhone").value||"+91 98XXX XXXXX";
- var d={id:"d"+Date.now(),name:n,group:g,lat:userLoc.lat,lng:userLoc.lng,ph:p,last:daysAgo(200),plat:true};
+ var age=parseInt((document.getElementById("dAge")||{}).value||"25",10),wt=parseInt((document.getElementById("dWeight")||{}).value||"60",10);
+ if(!document.getElementById("dConsent").checked){toast("Please tick consent first ✓");return;}
+ if(age<18||age>65){toast("Donors must be 18–65 years");return;}
+ if(wt<45){toast("Minimum weight is 45 kg");return;}
+ var code=String(Math.floor(1000+Math.random()*9000));
+ var d={id:"d"+Date.now(),name:n,group:g,lat:userLoc.lat,lng:userLoc.lng,ph:p,last:daysAgo(200),plat:true,age:age,weight:wt,consent:true,otpOk:true};
  DONORS.push(d);
  try{var ex=lsGet("rakt_extra")||[];ex.push(d);lsSet("rakt_extra",ex);}catch(e){}
- refreshDonorOptions();document.getElementById("meDonor").value=d.id;S.meDonor=d.id;updateTools();renderDonate();toast("Welcome, "+n+"!");
+ refreshDonorOptions();document.getElementById("meDonor").value=d.id;S.meDonor=d.id;updateTools();renderDonate();
+ toast("Phone verified ✓ (mock OTP "+code+") — welcome, "+n+"!");
+}
+function optOutToggle(){
+ var me=meNow();if(!me)return;
+ me.optedOut=!me.optedOut;
+ document.getElementById("optBtn").textContent=me.optedOut?"Opt back in (resume alerts)":"Stop all alerts (opt out)";
+ toast(me.optedOut?"Opted out — you won't be pinged. Reply JOIN anytime.":"Welcome back — alerts resumed ✓");
+ renderDonate();
 }
 function refreshDonorOptions(){
  document.getElementById("meDonor").innerHTML=DONORS.map(function(d){return "<option value='"+d.id+"'"+(d.id===S.meDonor?" selected":"")+">"+d.name+" • "+d.group+"</option>";}).join("");
@@ -728,6 +775,10 @@ function updateTools(){
  var me=meNow();if(!me||!document.getElementById("toolElig"))return;
  var gap=gapNeed(),days=Math.max(0,Math.ceil(gap-(Date.now()-new Date(me.last).getTime())/864e5));
  document.getElementById("toolElig").textContent=days===0?"✅ TODAY":"in "+days+"d";
+ try{
+  var rem=(lsGet("rakt_remind")||{})[me.id];
+  if(rem)document.getElementById("toolElig").textContent+=" • ⏰ reminder "+rem;
+ }catch(e){}
  var n=S.accepted.filter(function(a){return a.id===me.id;}).length;
  document.getElementById("toolBadge").textContent=n>0?("🏆 Lifesaver ×"+(n+1)):(elig(me)?"💚 Ready":"⏳ Resting");
 }
